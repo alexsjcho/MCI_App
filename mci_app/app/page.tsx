@@ -220,6 +220,7 @@ export default function Home() {
     })),
   ].sort((a, b) => b.total - a.total);
   const leaderTotal = scores[0]?.total ?? 0;
+  const isTwoCompanyView = visible.length === 1;
 
   const exportCSV = useCallback(() => {
     let csv =
@@ -245,8 +246,22 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }, [currentView, currentQuarter, visible]);
 
-  const readinessLabel = (r: string, d: string) =>
-    r === "GA" ? "GA" : r === "Beta" ? "Beta" : d ? d.substring(0, 7) : "TBD";
+  const readinessLabel = (r: string, d: string) => {
+    if (r === "GA") return "GA";
+    if (r === "Beta") return "Beta";
+
+    if (!d) return "Planned";
+
+    const [year, monthStr] = d.split("-");
+    const month = Number(monthStr);
+
+    if (!Number.isFinite(month) || month < 1 || month > 12) {
+      return "Planned";
+    }
+
+    const quarter = Math.floor((month - 1) / 3) + 1;
+    return `Planned: Q${quarter} ${year}`;
+  };
 
   const tierFilterTier = (tier: string) =>
     tier === "all" ? "all" : tier === "Tier 1" ? "t1" : tier === "Tier 2" ? "t2" : "t3";
@@ -479,306 +494,443 @@ export default function Home() {
                 }
               />
             </Tabs>
+        </Paper>
 
-          <Box
+        {/* Summary bar */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            px: { xs: 2.5, md: 5 },
+            py: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+            overflowX: "auto",
+          }}
+        >
+          {scores.map((s) => {
+            const isLeader = s.total === leaderTotal && !s.isWisdom;
+            const rank = scores.indexOf(s) + 1;
+            const suf = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
+            const pct = mp > 0 ? Math.round((s.total / mp) * 100) : 0;
+            return (
+              <Paper
+                key={s.name}
+                elevation={0}
+                sx={{
+                  flexShrink: 0,
+                  minWidth: 140,
+                  p: 1.5,
+                  border: 1,
+                  borderColor: s.isWisdom ? "primary.main" : "divider",
+                  bgcolor: s.isWisdom
+                    ? "transparent"
+                    : "#F4F2F8",
+                  background: s.isWisdom
+                    ? "linear-gradient(135deg, rgba(109, 40, 217, 0.06), rgba(14, 165, 233, 0.04))"
+                    : undefined,
+                  ...(isLeader && { borderColor: "success.main", borderWidth: 1 }),
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={600}
+                  color={s.isWisdom ? "primary.dark" : "text.secondary"}
+                  sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}
+                >
+                  {s.name}
+                </Typography>
+                <Typography variant="h4" sx={{ fontSize: "1.75rem", fontWeight: 700, letterSpacing: "-0.02em" }}>
+                  {s.total}
+                  <Typography component="span" variant="body2" color="text.disabled" sx={{ fontSize: "0.8125rem", fontWeight: 400 }}>
+                    {" "}/ {mp}
+                  </Typography>
+                </Typography>
+                <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.25, display: "block" }}>
+                  {rank}{suf} place · {pct}%
+                </Typography>
+                {!s.isWisdom && (
+                  <Chip
+                    label={COMP_TIERS[s.name]}
+                    size="small"
+                    className={`summary-tier ${tierClass(s.name)}`}
+                    sx={{ mt: 0.375, height: 18, fontSize: "0.5625rem" }}
+                  />
+                )}
+              </Paper>
+            );
+          })}
+        </Box>
+
+        {/* Filters below score cards */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: { xs: 2.5, md: 5 },
+            pb: 1.5,
+            pt: 0.5,
+          }}
+        >
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleFeatureMenuOpen}
+            endIcon={
+              <ExpandMoreIcon
+                sx={{
+                  fontSize: 16,
+                  transform: featureMenuOpen ? "rotate(180deg)" : "none",
+                }}
+              />
+            }
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              py: 0.5,
-              mt: 0.5,
+              textTransform: "none",
+              fontSize: "0.75rem",
+              borderColor: "divider",
+              color: "text.secondary",
+              "&:hover": {
+                borderColor: "primary.main",
+                color: "text.primary",
+                bgcolor: "action.hover",
+              },
             }}
           >
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handleFeatureMenuOpen}
-              endIcon={
-                <ExpandMoreIcon
-                  sx={{
-                    fontSize: 16,
-                    transform: featureMenuOpen ? "rotate(180deg)" : "none",
-                  }}
-                />
-              }
+            Feature sets
+          </Button>
+          <Menu
+            anchorEl={featureAnchorEl}
+            open={featureMenuOpen}
+            onClose={handleFeatureMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            slotProps={{
+              paper: {
+                sx: { mt: 1.5, minWidth: 280, maxHeight: 380 },
+              },
+            }}
+          >
+            <Box
               sx={{
-                textTransform: "none",
-                fontSize: "0.75rem",
+                px: 1.75,
+                py: 1,
+                borderBottom: 1,
                 borderColor: "divider",
-                color: "text.secondary",
-                "&:hover": {
-                  borderColor: "primary.main",
-                  color: "text.primary",
-                  bgcolor: "action.hover",
-                },
               }}
             >
-              Feature sets
-            </Button>
-              <Menu
-                anchorEl={featureAnchorEl}
-                open={featureMenuOpen}
-                onClose={handleFeatureMenuClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{
-                  paper: {
-                    sx: { mt: 1.5, minWidth: 280, maxHeight: 380 },
-                  },
-                }}
+              <Typography
+                variant="caption"
+                color="text.disabled"
+                fontWeight={600}
               >
-                <Box
-                  sx={{
-                    px: 1.75,
-                    py: 1,
-                    borderBottom: 1,
-                    borderColor: "divider",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    fontWeight={600}
-                  >
-                    Show / Hide Feature Categories
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 1,
-                    px: 1.75,
-                    py: 1,
-                    borderBottom: 1,
-                    borderColor: "divider",
-                  }}
-                >
-                  <Button
-                    size="small"
-                    onClick={featureSelectAll}
-                    sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={featureDeselectAll}
-                    sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-                  >
-                    Deselect All
-                  </Button>
-                </Box>
-                {DATA.categories.map((cat) => {
-                  const checked = visibleCategories.has(cat.name);
-                  return (
-                    <MenuItem
-                      key={cat.name}
-                      onClick={() => toggleCategoryVisibility(cat.name)}
-                      sx={{ py: 0.75 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <Checkbox
-                          checked={checked}
-                          size="small"
-                          sx={{
-                            color: "primary.main",
-                            "&.Mui-checked": { color: "primary.main" },
-                          }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={cat.name}
-                        primaryTypographyProps={{
-                          fontSize: "0.8125rem",
-                          fontWeight: 500,
-                        }}
-                      />
-                    </MenuItem>
-                  );
-                })}
-              </Menu>
-
+                Show / Hide Feature Categories
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                px: 1.75,
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
               <Button
                 size="small"
-                variant="outlined"
-                onClick={handleCompMenuOpen}
-                endIcon={<ExpandMoreIcon sx={{ fontSize: 16, transform: compMenuOpen ? "rotate(180deg)" : "none" }} />}
-                sx={{
-                  textTransform: "none",
-                  fontSize: "0.75rem",
-                  borderColor: "divider",
-                  color: "text.secondary",
-                  "&:hover": { borderColor: "primary.main", color: "text.primary", bgcolor: "action.hover" },
-                }}
+                onClick={featureSelectAll}
+                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
               >
-                Competitors
-                <Chip
-                  label={visibleCompetitors[currentView].size}
-                  size="small"
-                  sx={{
-                    ml: 0.75,
-                    height: 18,
-                    minWidth: 18,
-                    fontSize: "0.625rem",
-                    fontWeight: 700,
-                    bgcolor: "primary.main",
-                    color: "#fff",
-                    "& .MuiChip-label": { px: 0.75 },
-                  }}
-                />
+                Select All
               </Button>
-              <Menu
-                anchorEl={compAnchorEl}
-                open={compMenuOpen}
-                onClose={handleCompMenuClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{
-                  paper: {
-                    sx: { mt: 1.5, minWidth: 320, maxHeight: 380 },
-                  },
+              <Button
+                size="small"
+                onClick={featureDeselectAll}
+                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+              >
+                Deselect All
+              </Button>
+            </Box>
+            {DATA.categories.map((cat) => {
+              const checked = visibleCategories.has(cat.name);
+              return (
+                <MenuItem
+                  key={cat.name}
+                  onClick={() => toggleCategoryVisibility(cat.name)}
+                  sx={{ py: 0.75 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Checkbox
+                      checked={checked}
+                      size="small"
+                      sx={{
+                        color: "primary.main",
+                        "&.Mui-checked": { color: "primary.main" },
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={cat.name}
+                    primaryTypographyProps={{
+                      fontSize: "0.8125rem",
+                      fontWeight: 500,
+                    }}
+                  />
+                </MenuItem>
+              );
+            })}
+          </Menu>
+
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleCompMenuOpen}
+            endIcon={
+              <ExpandMoreIcon
+                sx={{
+                  fontSize: 16,
+                  transform: compMenuOpen ? "rotate(180deg)" : "none",
+                }}
+              />
+            }
+            sx={{
+              textTransform: "none",
+              fontSize: "0.75rem",
+              borderColor: "divider",
+              color: "text.secondary",
+              "&:hover": {
+                borderColor: "primary.main",
+                color: "text.primary",
+                bgcolor: "action.hover",
+              },
+            }}
+          >
+            Competitors
+            <Chip
+              label={visibleCompetitors[currentView].size}
+              size="small"
+              sx={{
+                ml: 0.75,
+                height: 18,
+                minWidth: 18,
+                fontSize: "0.625rem",
+                fontWeight: 700,
+                bgcolor: "primary.main",
+                color: "#fff",
+                "& .MuiChip-label": { px: 0.75 },
+              }}
+            />
+          </Button>
+          <Menu
+            anchorEl={compAnchorEl}
+            open={compMenuOpen}
+            onClose={handleCompMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+            slotProps={{
+              paper: {
+                sx: { mt: 1.5, minWidth: 320, maxHeight: 380 },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                px: 1.75,
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="caption"
+                color="text.disabled"
+                fontWeight={600}
+              >
+                Show / Hide Competitors
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                px: 1.75,
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
+              <ButtonGroup
+                size="small"
+                sx={{
+                  borderColor: "divider",
+                  bgcolor: "#F4F2F8",
+                  "& .MuiButton-root": { borderColor: "divider" },
                 }}
               >
-                <Box sx={{ px: 1.75, py: 1, borderBottom: 1, borderColor: "divider" }}>
-                  <Typography variant="caption" color="text.disabled" fontWeight={600}>
-                    Show / Hide Competitors
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    px: 1.75,
-                    py: 1,
-                    borderBottom: 1,
-                    borderColor: "divider",
-                  }}
-                >
-                  <ButtonGroup
-                    size="small"
+                {(["Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
+                  <Button
+                    key={tier}
+                    onClick={() => {
+                      const next = activeTierFilter === tier ? "all" : tier;
+                      setActiveTierFilter(next);
+                      if (next !== "all") {
+                        applyTierSelection(tier);
+                      }
+                    }}
+                    className={`tier-filter-btn ${tierFilterTier(tier)} ${
+                      activeTierFilter === tier ? "active" : ""
+                    }`}
                     sx={{
-                      borderColor: "divider",
-                      bgcolor: "#F4F2F8",
-                      "& .MuiButton-root": { borderColor: "divider" },
+                      textTransform: "none",
+                      fontSize: "0.6875rem",
+                      fontWeight: 600,
+                      px: 1.25,
+                      py: 0.625,
                     }}
                   >
-                    {(["Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
-                      <Button
-                        key={tier}
-                        onClick={() => {
-                          const next =
-                            activeTierFilter === tier ? "all" : tier;
-                          setActiveTierFilter(next);
-                          if (next !== "all") {
-                            applyTierSelection(tier);
-                          }
-                        }}
-                        className={`tier-filter-btn ${tierFilterTier(tier)} ${
-                          activeTierFilter === tier ? "active" : ""
-                        }`}
-                        sx={{
-                          textTransform: "none",
-                          fontSize: "0.6875rem",
-                          fontWeight: 600,
-                          px: 1.25,
-                          py: 0.625,
-                        }}
-                      >
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                      }}
+                    >
+                      {tier === "Tier 1"
+                        ? "T1"
+                        : tier === "Tier 2"
+                          ? "T2"
+                          : "T3"}
+                      <Tooltip title={tierInfoLabels[tier]}>
                         <Box
                           component="span"
+                          aria-label={tierInfoLabels[tier]}
                           sx={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: 0.5,
                           }}
                         >
-                          {tier === "Tier 1" ? "T1" : tier === "Tier 2" ? "T2" : "T3"}
-                          <Tooltip title={tierInfoLabels[tier]}>
-                            <Box
-                              component="span"
-                              aria-label={tierInfoLabels[tier]}
-                              sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                              }}
-                            >
-                              <InfoOutlinedIcon sx={{ fontSize: 14 }} />
-                            </Box>
-                          </Tooltip>
+                          <InfoOutlinedIcon sx={{ fontSize: 14 }} />
                         </Box>
-                      </Button>
-                    ))}
-                  </ButtonGroup>
-                </Box>
-
-                <Box sx={{ display: "flex", gap: 1, px: 1.75, py: 1, borderBottom: 1, borderColor: "divider" }}>
-                  <Button size="small" onClick={compSelectAll} sx={{ textTransform: "none", fontSize: "0.6875rem" }}>
-                    Select All
+                      </Tooltip>
+                    </Box>
                   </Button>
-                  <Button size="small" onClick={compDeselectAll} sx={{ textTransform: "none", fontSize: "0.6875rem" }}>
-                    Deselect All
-                  </Button>
-                </Box>
-
-                <MenuItem disabled sx={{ opacity: 0.85 }}>
-                  <ListItemIcon>
-                    <Checkbox checked size="small" sx={{ color: "primary.dark", "&.Mui-checked": { color: "primary.dark" } }} />
-                  </ListItemIcon>
-                  <ListItemText primary="WisdomAI" primaryTypographyProps={{ fontWeight: 600, color: "primary.dark" }} />
-                  <LockIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-                </MenuItem>
-                {COMP_NAMES.map((c) => {
-                  const checked = visibleCompetitors[currentView].has(c);
-                  const tc = tierClass(c);
-                  return (
-                    <MenuItem
-                      key={c}
-                      onClick={() => toggleCompetitor(c)}
-                      sx={{ py: 0.75 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <Checkbox
-                          checked={checked}
-                          size="small"
-                          sx={{ color: "primary.main", "&.Mui-checked": { color: "primary.main" } }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText primary={c} primaryTypographyProps={{ fontSize: "0.8125rem", fontWeight: 500 }} />
-                      <Chip label={COMP_TIERS[c]} size="small" className={`comp-tier-tag ${tc}`} sx={{ height: 18, fontSize: "0.5625rem" }} />
-                    </MenuItem>
-                  );
-                })}
-              </Menu>
-
-              {currentView === "quarterly" && (
-                <ButtonGroup
-                  size="small"
-                  sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}
-                >
-                  {["Q1", "Q2", "Q3", "Q4"].map((q) => (
-                    <Button
-                      key={q}
-                      onClick={() => setCurrentQuarter(q)}
-                      variant={currentQuarter === q ? "contained" : "text"}
-                      sx={{
-                        textTransform: "none",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        px: 1.75,
-                        py: 0.75,
-                        ...(currentQuarter === q && {
-                          boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)",
-                        }),
-                      }}
-                    >
-                      {q}
-                    </Button>
-                  ))}
-                </ButtonGroup>
-              )}
+                ))}
+              </ButtonGroup>
             </Box>
-        </Paper>
 
-        {/* Legend */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                px: 1.75,
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Button
+                size="small"
+                onClick={compSelectAll}
+                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+              >
+                Select All
+              </Button>
+              <Button
+                size="small"
+                onClick={compDeselectAll}
+                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+              >
+                Deselect All
+              </Button>
+            </Box>
+
+            <MenuItem disabled sx={{ opacity: 0.85 }}>
+              <ListItemIcon>
+                <Checkbox
+                  checked
+                  size="small"
+                  sx={{
+                    color: "primary.dark",
+                    "&.Mui-checked": { color: "primary.dark" },
+                  }}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary="WisdomAI"
+                primaryTypographyProps={{
+                  fontWeight: 600,
+                  color: "primary.dark",
+                }}
+              />
+              <LockIcon sx={{ fontSize: 14, color: "text.disabled" }} />
+            </MenuItem>
+            {COMP_NAMES.map((c) => {
+              const checked = visibleCompetitors[currentView].has(c);
+              const tc = tierClass(c);
+              return (
+                <MenuItem
+                  key={c}
+                  onClick={() => toggleCompetitor(c)}
+                  sx={{ py: 0.75 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Checkbox
+                      checked={checked}
+                      size="small"
+                      sx={{
+                        color: "primary.main",
+                        "&.Mui-checked": { color: "primary.main" },
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={c}
+                    primaryTypographyProps={{
+                      fontSize: "0.8125rem",
+                      fontWeight: 500,
+                    }}
+                  />
+                  <Chip
+                    label={COMP_TIERS[c]}
+                    size="small"
+                    className={`comp-tier-tag ${tc}`}
+                    sx={{ height: 18, fontSize: "0.5625rem" }}
+                  />
+                </MenuItem>
+              );
+            })}
+          </Menu>
+
+          {currentView === "quarterly" && (
+            <ButtonGroup
+              size="small"
+              sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}
+            >
+              {["Q1", "Q2", "Q3", "Q4"].map((q) => (
+                <Button
+                  key={q}
+                  onClick={() => setCurrentQuarter(q)}
+                  variant={currentQuarter === q ? "contained" : "text"}
+                  sx={{
+                    textTransform: "none",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    px: 1.75,
+                    py: 0.75,
+                    ...(currentQuarter === q && {
+                      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)",
+                    }),
+                  }}
+                >
+                  {q}
+                </Button>
+              ))}
+            </ButtonGroup>
+          )}
+        </Box>
+
+        {/* Legend below filters */}
         <Box
           sx={{
             display: "flex",
@@ -846,72 +998,6 @@ export default function Home() {
               On Roadmap
             </Typography>
           </Box>
-        </Box>
-
-        {/* Summary bar */}
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            px: { xs: 2.5, md: 5 },
-            py: 2,
-            borderBottom: 1,
-            borderColor: "divider",
-            overflowX: "auto",
-          }}
-        >
-          {scores.map((s) => {
-            const isLeader = s.total === leaderTotal && !s.isWisdom;
-            const rank = scores.indexOf(s) + 1;
-            const suf = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
-            const pct = mp > 0 ? Math.round((s.total / mp) * 100) : 0;
-            return (
-              <Paper
-                key={s.name}
-                elevation={0}
-                sx={{
-                  flexShrink: 0,
-                  minWidth: 140,
-                  p: 1.5,
-                  border: 1,
-                  borderColor: s.isWisdom ? "primary.main" : "divider",
-                  bgcolor: s.isWisdom
-                    ? "transparent"
-                    : "#F4F2F8",
-                  background: s.isWisdom
-                    ? "linear-gradient(135deg, rgba(109, 40, 217, 0.06), rgba(14, 165, 233, 0.04))"
-                    : undefined,
-                  ...(isLeader && { borderColor: "success.main", borderWidth: 1 }),
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  fontWeight={600}
-                  color={s.isWisdom ? "primary.dark" : "text.secondary"}
-                  sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}
-                >
-                  {s.name}
-                </Typography>
-                <Typography variant="h4" sx={{ fontSize: "1.75rem", fontWeight: 700, letterSpacing: "-0.02em" }}>
-                  {s.total}
-                  <Typography component="span" variant="body2" color="text.disabled" sx={{ fontSize: "0.8125rem", fontWeight: 400 }}>
-                    {" "}/ {mp}
-                  </Typography>
-                </Typography>
-                <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.25, display: "block" }}>
-                  {rank}{suf} place · {pct}%
-                </Typography>
-                {!s.isWisdom && (
-                  <Chip
-                    label={COMP_TIERS[s.name]}
-                    size="small"
-                    className={`summary-tier ${tierClass(s.name)}`}
-                    sx={{ mt: 0.375, height: 18, fontSize: "0.5625rem" }}
-                  />
-                )}
-              </Paper>
-            );
-          })}
         </Box>
 
         {/* Table */}
@@ -1109,7 +1195,11 @@ export default function Home() {
                     </TableRow>
                     {cat.features.map((f) => {
                       const inc = isIncluded(f, currentView, currentQuarter);
-                      const wScore = getWisdomScore(f, currentView, currentQuarter);
+                      const wScore = getWisdomScore(
+                        f,
+                        currentView,
+                        currentQuarter,
+                      );
                       const isNew =
                         currentView === "quarterly" &&
                         isFeatureNewInQuarter(f, currentQuarter) &&
@@ -1122,8 +1212,12 @@ export default function Home() {
                             : "readiness-planned";
                       const rdLabel = readinessLabel(
                         f.wisdom.readiness,
-                        f.wisdom.expectedDate
+                        f.wisdom.expectedDate,
                       );
+                      const isPlannedNotIncluded =
+                        !inc &&
+                        currentView !== "ideal" &&
+                        f.wisdom.readiness === "Planned";
 
                       return (
                         <TableRow
@@ -1143,28 +1237,86 @@ export default function Home() {
                               zIndex: 30,
                               bgcolor: "background.default",
                             },
-                            ...((!inc && currentView !== "ideal") && { opacity: 0.35 }),
                           }}
-                          className={`${!inc && currentView !== "ideal" ? "not-included" : ""} ${isNew ? "new-in-quarter" : ""}`}
+                          className={`${isNew ? "new-in-quarter" : ""}`}
                         >
                           <TableCell>
                             <div className="feat-name">{f.name}</div>
                             <div className="feat-what">{trunc(f.what, 140)}</div>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: "rgba(109, 40, 217, 0.03)" }}>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: "rgba(109, 40, 217, 0.03)",
+                              position: "relative",
+                            }}
+                            className={isPlannedNotIncluded ? "planned-muted" : undefined}
+                          >
                             <span className={`score-pill ${scoreClass(wScore)}`}>{wScore}</span>
-                            <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 260, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              color="text.disabled"
+                              sx={{
+                                fontSize: "0.625rem",
+                                mt: 0.5,
+                                maxWidth: isTwoCompanyView ? "none" : 260,
+                                lineHeight: 1.3,
+                                display: "-webkit-box",
+                                WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }}
+                              style={{
+                                textAlign: isTwoCompanyView ? "center" : undefined,
+                              }}
+                            >
                               {trunc(f.wisdom.description, 140)}
                             </Typography>
-                            <span className={`readiness-tag ${rdClass}`}>{rdLabel}</span>
+                            <Box
+                              component="span"
+                              className={`readiness-tag ${rdClass}`}
+                              style={{
+                                position: "absolute",
+                                top: 4,
+                                right: 8,
+                              }}
+                            >
+                              {rdLabel}
+                            </Box>
                           </TableCell>
                           {visible.map((c) => {
                             const cd = f.competitors[c];
                             const cs = cd?.score ?? 0;
                             return (
-                              <TableCell key={c} align="center">
+                              <TableCell
+                                key={c}
+                                align="center"
+                                className={
+                                  isPlannedNotIncluded && (!cd || cs <= 0)
+                                    ? "planned-muted"
+                                    : undefined
+                                }
+                              >
                                 <span className={`score-pill ${scoreClass(cs)}`}>{cs}</span>
-                                <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 260, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                <Typography
+                                  variant="caption"
+                                  display="block"
+                                  color="text.disabled"
+                                  sx={{
+                                    fontSize: "0.625rem",
+                                    mt: 0.5,
+                                    maxWidth: isTwoCompanyView ? "none" : 260,
+                                    lineHeight: 1.3,
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                  }}
+                                  style={{
+                                    textAlign: isTwoCompanyView ? "center" : undefined,
+                                  }}
+                                >
                                   {trunc(cd?.description ?? "", 140)}
                                 </Typography>
                               </TableCell>

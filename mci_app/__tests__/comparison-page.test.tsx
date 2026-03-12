@@ -75,6 +75,206 @@ describe("Competitor comparison page", () => {
     expect(rankTexts.length).toBeGreaterThan(0);
   });
 
+  it("renders the Feature sets and Competitors filters below the score cards", () => {
+    render(<Home />);
+
+    const rankTexts = screen.getAllByText(/place/);
+    expect(rankTexts.length).toBeGreaterThan(0);
+
+    const featureButton = screen.getByRole("button", { name: /feature sets/i });
+    const competitorsButton = screen.getByRole("button", {
+      name: /competitors/i,
+    });
+
+    const firstRank = rankTexts[0];
+
+    const featureRelativePosition =
+      firstRank.compareDocumentPosition(featureButton);
+    const competitorsRelativePosition =
+      firstRank.compareDocumentPosition(competitorsButton);
+
+    expect(
+      featureRelativePosition & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      competitorsRelativePosition & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("renders the score legend below the Feature sets and Competitors filters", () => {
+    render(<Home />);
+
+    const featureButton = screen.getByRole("button", { name: /feature sets/i });
+    const competitorsButton = screen.getByRole("button", {
+      name: /competitors/i,
+    });
+    const legendLabel = screen.getByText(/score legend:/i);
+
+    const featureToLegend =
+      featureButton.compareDocumentPosition(legendLabel);
+    const competitorsToLegend =
+      competitorsButton.compareDocumentPosition(legendLabel);
+
+    expect(
+      featureToLegend & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      competitorsToLegend & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("centers feature and competitor description text when only one competitor is visible", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    // Limit comparison to WisdomAI + Databricks Genie
+    const competitorsButton = screen.getByRole("button", {
+      name: /competitors/i,
+    });
+    await user.click(competitorsButton);
+
+    const deselectAll = await screen.findByRole("button", {
+      name: /deselect all/i,
+    });
+    await user.click(deselectAll);
+
+    const databricksOption = await screen.findByText(/databricks genie/i);
+    await user.click(databricksOption);
+
+    // Wisdom description
+    const wisdomDesc = screen.getByText(/core nlq engine/i);
+    expect(wisdomDesc).toHaveStyle("text-align: center");
+
+    // Databricks Genie description
+    const genieDesc = screen.getByText(
+      /genie spaces with unity catalog context/i,
+    );
+    expect(genieDesc).toHaveStyle("text-align: center");
+  });
+
+  it("lets descriptions use full cell width in two-company comparison", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    // Limit comparison to WisdomAI + Databricks Genie
+    const competitorsButton = screen.getByRole("button", {
+      name: /competitors/i,
+    });
+    await user.click(competitorsButton);
+
+    const deselectAll = await screen.findByRole("button", {
+      name: /deselect all/i,
+    });
+    await user.click(deselectAll);
+
+    const databricksOption = await screen.findByText(/databricks genie/i);
+    await user.click(databricksOption);
+
+    const wisdomDesc = screen.getByText(/core nlq engine; llms write queries/i);
+    const genieDesc = screen.getByText(
+      /genie spaces with unity catalog context/i,
+    );
+
+    const wisdomStyle = window.getComputedStyle(wisdomDesc);
+    const genieStyle = window.getComputedStyle(genieDesc);
+
+    expect(wisdomStyle.maxWidth).toBe("none");
+    expect(genieStyle.maxWidth).toBe("none");
+  });
+
+  it("scores WisdomAI beta features as 2 in Real Comparison and includes them in totals", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    // Switch to Real Comparison (GA-only before change)
+    const realTab = screen.getByRole("tab", { name: /real comparison/i });
+    await user.click(realTab);
+
+    // API / Embed for External Apps is a beta feature
+    const betaRow = screen
+      .getByText(/api \/ embed for external apps/i)
+      .closest("tr");
+    expect(betaRow).not.toBeNull();
+    if (!betaRow) return;
+
+    // WisdomAI score pill should show 2 (not 0 or original score)
+    const betaScore = within(betaRow).getByText("2");
+    expect(betaScore).toBeInTheDocument();
+
+    // Automation & Self-Service category header should reflect 3 features (max 15)
+    const categoryRow = screen
+      .getByText(/automation & self-service/i)
+      .closest("tr");
+    expect(categoryRow).not.toBeNull();
+    if (!categoryRow) return;
+
+    const totalText = categoryRow.textContent || "";
+    expect(totalText).toMatch(/\/\s*15\b/);
+  });
+
+  it("positions the GA readiness tag in the top right of the WisdomAI cell", () => {
+    render(<Home />);
+
+    const nlqRow = screen
+      .getByText(/natural language query \(nlq\)/i)
+      .closest("tr");
+    expect(nlqRow).not.toBeNull();
+    if (!nlqRow) return;
+
+    const gaTag = within(nlqRow)
+      .getAllByText("GA")
+      .find((el) => el.className.includes("readiness-tag"));
+
+    expect(gaTag).toBeDefined();
+    if (!gaTag) return;
+
+    expect(gaTag).toHaveStyle("position: absolute");
+  });
+
+  it("formats planned readiness labels using quarters and year", () => {
+    render(<Home />);
+
+    const row = screen
+      .getByText(/code-based analysis \(sql\/python\/r\)/i)
+      .closest("tr");
+    expect(row).not.toBeNull();
+    if (!row) return;
+
+    const plannedTag = within(row).getByText(/planned:\s*q3 2026/i);
+    expect(plannedTag).toBeInTheDocument();
+  });
+
+  it("only mutes WisdomAI and unsupported competitor cells for planned features in non-ideal views", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    // Switch to Real Comparison (GA-only) so planned features are not included
+    const realTab = screen.getByRole("tab", { name: /real comparison/i });
+    await user.click(realTab);
+
+    const row = screen
+      .getByText(/code-based analysis \(sql\/python\/r\)/i)
+      .closest("tr");
+    expect(row).not.toBeNull();
+    if (!row) return;
+
+    // WisdomAI readiness tag should be muted
+    const plannedTag = within(row).getByText(/planned:\s*q3 2026/i);
+    const wisdomCell = plannedTag.closest("td");
+    expect(wisdomCell).not.toBeNull();
+    if (!wisdomCell) return;
+    expect(wisdomCell.className).toMatch(/planned-muted/);
+
+    // Databricks Genie supports this feature and should not be muted
+    const genieDesc = within(row).getByText(
+      /full notebook: sql, python, r, scala/i,
+    );
+    const genieCell = genieDesc.closest("td");
+    expect(genieCell).not.toBeNull();
+    if (!genieCell) return;
+    expect(genieCell.className).not.toMatch(/planned-muted/);
+  });
+
   it("shows tier info tooltips next to T1, T2, and T3 buttons and removes header tier badges", async () => {
     const user = userEvent.setup();
     render(<Home />);

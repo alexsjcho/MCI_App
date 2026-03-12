@@ -585,8 +585,12 @@ body {
 }
 
 .readiness-planned {
-  background: rgba(176, 122, 24, 0.1);
-  color: var(--score-3);
+  background: rgba(245, 158, 11, 0.22);
+  color: #9a3412;
+}
+
+.planned-muted {
+  opacity: 0.35;
 }
 
 .comp-table tr.feat-row.hidden {

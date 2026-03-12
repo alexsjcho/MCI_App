@@ -1,13 +1,13 @@
-# WA_MCI
+# MCI_App
 
 ## How to run the app
 
-The app is a Next.js app in the `comparison-matrix` directory.
+The primary app is a Next.js app in the `mci_app` directory.
 
 1. **Install dependencies**
 
    ```bash
-   cd comparison-matrix
+   cd mci_app
    npm install
    ```
 
@@ -25,3 +25,4 @@ The app is a Next.js app in the `comparison-matrix` directory.
    - **Start production server:** `npm start` (run after `npm run build`)
    - **Run tests:** `npm test`
    - **Lint:** `npm run lint`
+

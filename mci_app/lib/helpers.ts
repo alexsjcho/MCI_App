@@ -13,6 +13,10 @@ export function isFeatureReady(f: Feature): boolean {
   return f.wisdom.readiness === "GA";
 }
 
+function wisdomBaseScore(f: Feature): number {
+  return f.wisdom.readiness === "Beta" ? 2 : f.wisdom.score;
+}
+
 export function isFeatureInQuarter(f: Feature, q: string): boolean {
   if (!f.wisdom.expectedDate) return false;
   return new Date(f.wisdom.expectedDate) <= QUARTER_ENDS[q];
@@ -31,11 +35,29 @@ export function getWisdomScore(
   view: ViewMode,
   quarter: string
 ): number {
-  if (view === "ideal") return f.wisdom.score;
-  if (view === "real") return isFeatureReady(f) ? f.wisdom.score : 0;
-  if (view === "quarterly")
-    return isFeatureInQuarter(f, quarter) ? f.wisdom.score : 0;
-  return f.wisdom.score;
+  const base = wisdomBaseScore(f);
+
+  if (view === "ideal") return base;
+
+  if (view === "real") {
+    if (f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta") {
+      return base;
+    }
+    return 0;
+  }
+
+  if (view === "quarterly") {
+    if (
+      isFeatureInQuarter(f, quarter) ||
+      f.wisdom.readiness === "GA" ||
+      f.wisdom.readiness === "Beta"
+    ) {
+      return base;
+    }
+    return 0;
+  }
+
+  return base;
 }
 
 export function isIncluded(
@@ -44,8 +66,14 @@ export function isIncluded(
   quarter: string
 ): boolean {
   if (view === "ideal") return true;
-  if (view === "real") return isFeatureReady(f);
-  if (view === "quarterly") return isFeatureInQuarter(f, quarter);
+  if (view === "real")
+    return f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta";
+  if (view === "quarterly")
+    return (
+      isFeatureInQuarter(f, quarter) ||
+      f.wisdom.readiness === "GA" ||
+      f.wisdom.readiness === "Beta"
+    );
   return true;
 }
 
