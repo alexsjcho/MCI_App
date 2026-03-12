@@ -123,6 +123,57 @@ describe("Competitor comparison page", () => {
     ).toBeTruthy();
   });
 
+  it("orders summary cards by score so WisdomAI appears after higher-scoring competitors", () => {
+    render(<Home />);
+
+    const getSummaryLabelElement = (name: string) => {
+      const matches = screen.getAllByText(name);
+      const withTotals = matches.filter((el) =>
+        (el.parentElement?.textContent || "").match(/\d+\s*\/\s*\d+/),
+      );
+      expect(withTotals.length).toBeGreaterThan(0);
+      return withTotals[0];
+    };
+
+    const ms = getSummaryLabelElement("Microsoft Power BI");
+    const genie = getSummaryLabelElement("Databricks Genie");
+    const einstein = getSummaryLabelElement("Tableau Einstein");
+    const wisdom = getSummaryLabelElement("WisdomAI");
+
+    const assertBefore = (a: HTMLElement, b: HTMLElement) => {
+      const relation = a.compareDocumentPosition(b);
+      expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    };
+
+    assertBefore(ms, genie);
+    assertBefore(genie, einstein);
+    assertBefore(einstein, wisdom);
+  });
+
+  it("orders table header company columns by score in the same way as the summary cards", () => {
+    render(<Home />);
+
+    const table = screen.getByRole("table", {
+      name: /ai analytics comparison matrix/i,
+    });
+
+    const headerRow = within(table).getAllByRole("row")[0];
+
+    const ms = within(headerRow).getByText("Microsoft Power BI");
+    const genie = within(headerRow).getByText("Databricks Genie");
+    const einstein = within(headerRow).getByText("Tableau Einstein");
+    const wisdom = within(headerRow).getByText("WisdomAI");
+
+    const assertBefore = (a: HTMLElement, b: HTMLElement) => {
+      const relation = a.compareDocumentPosition(b);
+      expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    };
+
+    assertBefore(ms, genie);
+    assertBefore(genie, einstein);
+    assertBefore(einstein, wisdom);
+  });
+
   it("keeps the tabs, filters, legend, and table header visible by scrolling inside the table container", () => {
     render(<Home />);
 

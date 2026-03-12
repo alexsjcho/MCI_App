@@ -228,17 +228,18 @@ export default function Home() {
     isWisdom: false as const,
   }));
 
-  const scoreCards =
-    wTotal >= (competitorCards[0]?.total ?? 0)
-      ? [
-        { name: "WisdomAI", total: wTotal, isWisdom: true as const },
-        ...competitorCards,
-      ]
-      : [
-        competitorCards[0],
-        { name: "WisdomAI", total: wTotal, isWisdom: true as const },
-        ...competitorCards.slice(1),
-      ];
+  const scoreCards = [
+    ...competitorCards,
+    { name: "WisdomAI", total: wTotal, isWisdom: true as const },
+  ].sort((a, b) => {
+    if (b.total !== a.total) {
+      return b.total - a.total;
+    }
+    // On ties, keep WisdomAI after competitors for a stable, readable order
+    if (a.isWisdom && !b.isWisdom) return 1;
+    if (!a.isWisdom && b.isWisdom) return -1;
+    return a.name.localeCompare(b.name);
+  });
   const leaderTotal = scoreCards[0]?.total ?? 0;
   const isTwoCompanyView = visible.length === 1;
 
