@@ -21,6 +21,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
 import { DATA, COMP_NAMES, COMP_TIERS } from "@/lib/comparison-data";
 import type { ViewMode } from "@/lib/helpers";
 import {
@@ -38,6 +39,8 @@ import DownloadIcon from "@mui/icons-material/Download";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 
 const VIEW_DESCRIPTIONS: Record<ViewMode, string> = {
   ideal:
@@ -112,6 +115,7 @@ export default function Home() {
       ...prev,
       [currentView]: new Set(COMP_NAMES),
     }));
+    setActiveTierFilter("all");
   }, [currentView]);
 
   const compDeselectAll = useCallback(() => {
@@ -119,6 +123,7 @@ export default function Home() {
       ...prev,
       [currentView]: new Set(),
     }));
+    setActiveTierFilter("all");
   }, [currentView]);
 
   const handleCompMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -180,6 +185,29 @@ export default function Home() {
     });
     return m;
   };
+  const pctColor = (pct: number): string => {
+    const v = Math.max(0, Math.min(100, Math.round(pct || 0)));
+
+    if (v === 0) return "#A8A2B4";
+    if (v <= 20) return "#EF4444"; // 1–20%: red
+    if (v <= 40) return "#F15A24"; // 21–40%: red-orange
+    if (v <= 60) return "#F97316"; // 41–60%: orange
+    if (v <= 70) return "#FBBF24"; // 61–70%: yellow-orange
+
+    if (v <= 80) {
+      // 71–80%: blue (#3B82F6) → dark green (#166534) transition
+      const t = (v - 71) / 9; // 71–80 → 0–1
+      const start = { r: 0x3b, g: 0x82, b: 0xf6 };
+      const end = { r: 0x16, g: 0x65, b: 0x34 };
+      const r = Math.round(start.r + (end.r - start.r) * t);
+      const g = Math.round(start.g + (end.g - start.g) * t);
+      const b = Math.round(start.b + (end.b - start.b) * t);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    if (v <= 90) return "#166534"; // 81–90%: dark green
+    return "#4ADE80"; // 91–100%: light green
+  };
 
   const wTotal = totalFor(true, null);
   const mp = maxPossibleForVisible();
@@ -227,6 +255,23 @@ export default function Home() {
     "Tier 1": "Tier 1 - Direct Threats",
     "Tier 2": "Tier 2 - Adjacent Players",
     "Tier 3": "Tier 3 - Emerging",
+  };
+
+  const applyTierSelection = (tier: "Tier 1" | "Tier 2" | "Tier 3") => {
+    setVisibleCompetitors((prev) => ({
+      ...prev,
+      [currentView]: new Set(
+        COMP_NAMES.filter((name) => COMP_TIERS[name] === tier),
+      ),
+    }));
+  };
+
+  const toggleAllCategories = () => {
+    setCollapsedCategories((prev) => {
+      const allNames = DATA.categories.map((cat) => cat.name);
+      const allCollapsed = allNames.every((name) => prev.has(name));
+      return allCollapsed ? new Set() : new Set(allNames);
+    });
   };
 
   return (
@@ -287,28 +332,7 @@ export default function Home() {
               "linear-gradient(180deg, rgba(109, 40, 217, 0.08) 0%, transparent 100%)",
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              mb: 1,
-              flexWrap: "wrap",
-            }}
-          >
-            <Chip
-              label="◆ WisdomAI"
-              size="small"
-              sx={{
-                background: "linear-gradient(135deg, #6D28D9, #0EA5E9)",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "0.6875rem",
-                letterSpacing: 0.5,
-                "& .MuiChip-label": { px: 1.5 },
-              }}
-            />
-          </Box>
+
           <Typography
             variant="h1"
             className="header-title"
@@ -329,18 +353,18 @@ export default function Home() {
             borderColor: "divider",
             borderRadius: 0,
             px: { xs: 2.5, md: 5 },
+            py: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "nowrap" }}>
-            <Tabs
-              value={currentView}
-              onChange={(_, v) => setCurrentView(v as ViewMode)}
-              sx={{
-                minHeight: 48,
-                "& .MuiTab-root": { minHeight: 48, py: 1.75, px: 3 },
-                "& .MuiTabs-indicator": { bgcolor: "primary.main" },
-              }}
-            >
+          <Tabs
+            value={currentView}
+            onChange={(_, v) => setCurrentView(v as ViewMode)}
+            sx={{
+              minHeight: 48,
+              "& .MuiTab-root": { minHeight: 48, py: 1.75, px: 3 },
+              "& .MuiTabs-indicator": { bgcolor: "primary.main" },
+            }}
+          >
               <Tab
                 value="ideal"
                 label={
@@ -455,73 +479,38 @@ export default function Home() {
                 }
               />
             </Tabs>
-            <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1, py: 1 }}>
-              <ButtonGroup size="small" sx={{ borderColor: "divider", bgcolor: "#F4F2F8", "& .MuiButton-root": { borderColor: "divider" } }}>
-                {(["all", "Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
-                  <Button
-                    key={tier}
-                    onClick={() => setActiveTierFilter(tier)}
-                    className={`tier-filter-btn ${tierFilterTier(tier)} ${activeTierFilter === tier ? "active" : ""}`}
-                    sx={{
-                      textTransform: "none",
-                      fontSize: "0.6875rem",
-                      fontWeight: 600,
-                      px: 1.25,
-                      py: 0.625,
-                    }}
-                  >
-                    {tier === "all" ? (
-                      "All"
-                    ) : (
-                      <Box
-                        component="span"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        {tier === "Tier 1" ? "T1" : tier === "Tier 2" ? "T2" : "T3"}
-                        <Tooltip title={tierInfoLabels[tier]}>
-                          <Box
-                            component="span"
-                            aria-label={tierInfoLabels[tier]}
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            <InfoOutlinedIcon sx={{ fontSize: 14 }} />
-                          </Box>
-                        </Tooltip>
-                      </Box>
-                    )}
-                  </Button>
-                ))}
-              </ButtonGroup>
 
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={handleFeatureMenuOpen}
-                endIcon={
-                  <ExpandMoreIcon
-                    sx={{
-                      fontSize: 16,
-                      transform: featureMenuOpen ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                }
-                sx={{
-                  textTransform: "none",
-                  fontSize: "0.75rem",
-                  borderColor: "divider",
-                  color: "text.secondary",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    color: "text.primary",
-                    bgcolor: "action.hover",
-                  },
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              py: 0.5,
+              mt: 0.5,
+            }}
+          >
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleFeatureMenuOpen}
+              endIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    fontSize: 16,
+                    transform: featureMenuOpen ? "rotate(180deg)" : "none",
+                  }}
+                />
+              }
+              sx={{
+                textTransform: "none",
+                fontSize: "0.75rem",
+                borderColor: "divider",
+                color: "text.secondary",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  color: "text.primary",
+                  bgcolor: "action.hover",
+                },
               }}
             >
               Feature sets
@@ -646,7 +635,7 @@ export default function Home() {
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
                 slotProps={{
                   paper: {
-                    sx: { mt: 1.5, minWidth: 280, maxHeight: 380 },
+                    sx: { mt: 1.5, minWidth: 320, maxHeight: 380 },
                   },
                 }}
               >
@@ -655,6 +644,72 @@ export default function Home() {
                     Show / Hide Competitors
                   </Typography>
                 </Box>
+
+                <Box
+                  sx={{
+                    px: 1.75,
+                    py: 1,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                  }}
+                >
+                  <ButtonGroup
+                    size="small"
+                    sx={{
+                      borderColor: "divider",
+                      bgcolor: "#F4F2F8",
+                      "& .MuiButton-root": { borderColor: "divider" },
+                    }}
+                  >
+                    {(["Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
+                      <Button
+                        key={tier}
+                        onClick={() => {
+                          const next =
+                            activeTierFilter === tier ? "all" : tier;
+                          setActiveTierFilter(next);
+                          if (next !== "all") {
+                            applyTierSelection(tier);
+                          }
+                        }}
+                        className={`tier-filter-btn ${tierFilterTier(tier)} ${
+                          activeTierFilter === tier ? "active" : ""
+                        }`}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "0.6875rem",
+                          fontWeight: 600,
+                          px: 1.25,
+                          py: 0.625,
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          {tier === "Tier 1" ? "T1" : tier === "Tier 2" ? "T2" : "T3"}
+                          <Tooltip title={tierInfoLabels[tier]}>
+                            <Box
+                              component="span"
+                              aria-label={tierInfoLabels[tier]}
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+                            </Box>
+                          </Tooltip>
+                        </Box>
+                      </Button>
+                    ))}
+                  </ButtonGroup>
+                </Box>
+
                 <Box sx={{ display: "flex", gap: 1, px: 1.75, py: 1, borderBottom: 1, borderColor: "divider" }}>
                   <Button size="small" onClick={compSelectAll} sx={{ textTransform: "none", fontSize: "0.6875rem" }}>
                     Select All
@@ -663,6 +718,7 @@ export default function Home() {
                     Deselect All
                   </Button>
                 </Box>
+
                 <MenuItem disabled sx={{ opacity: 0.85 }}>
                   <ListItemIcon>
                     <Checkbox checked size="small" sx={{ color: "primary.dark", "&.Mui-checked": { color: "primary.dark" } }} />
@@ -694,7 +750,10 @@ export default function Home() {
               </Menu>
 
               {currentView === "quarterly" && (
-                <ButtonGroup size="small" sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}>
+                <ButtonGroup
+                  size="small"
+                  sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}
+                >
                   {["Q1", "Q2", "Q3", "Q4"].map((q) => (
                     <Button
                       key={q}
@@ -706,7 +765,9 @@ export default function Home() {
                         fontWeight: 600,
                         px: 1.75,
                         py: 0.75,
-                        ...(currentQuarter === q && { boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)" }),
+                        ...(currentQuarter === q && {
+                          boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)",
+                        }),
                       }}
                     >
                       {q}
@@ -714,28 +775,7 @@ export default function Home() {
                   ))}
                 </ButtonGroup>
               )}
-
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
-                onClick={exportCSV}
-                sx={{
-                  textTransform: "none",
-                  fontSize: "0.75rem",
-                  borderColor: "divider",
-                  color: "text.secondary",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    color: "text.primary",
-                    bgcolor: "#EBE8F1",
-                  },
-                }}
-              >
-                Export CSV
-              </Button>
             </Box>
-          </Box>
         </Paper>
 
         {/* Legend */}
@@ -754,7 +794,7 @@ export default function Home() {
           <Typography variant="caption" fontWeight={600} color="text.secondary">
             Score Legend:
           </Typography>
-          {[5, 4, 3, 2, 1, 0].map((s) => (
+          {[5, 4, 3, 2, 1].map((s) => (
             <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <Box
                 sx={{
@@ -884,7 +924,27 @@ export default function Home() {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ minWidth: 260, position: "sticky", left: 0, zIndex: 60, bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
-                  Feature
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                    }}
+                  >
+                    Feature
+                    <Tooltip
+                      title="Collapse or expand all feature categories"
+                    >
+                      <IconButton
+                        size="small"
+                        aria-label="Collapse all feature categories"
+                        onClick={toggleAllCategories}
+                        sx={{ ml: 0.5 }}
+                      >
+                        <UnfoldLessIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
                 <TableCell
                   sx={{
@@ -902,7 +962,7 @@ export default function Home() {
                 {visible.map((c) => (
                   <TableCell
                     key={c}
-                    sx={{ minWidth: 160, borderBottom: 1, borderColor: "divider" }}
+                    sx={{ minWidth: 220, borderBottom: 1, borderColor: "divider" }}
                     align="left"
                   >
                     {c}
@@ -955,31 +1015,94 @@ export default function Home() {
                       }}
                     >
                       <TableCell>
-                        <span className="cat-toggle">▼</span>
-                        {cat.name}
-                        {cat.description && (
-                          <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.5, fontWeight: 400, textTransform: "none" }}>
-                            · {trunc(cat.description, 55)}
-                          </Typography>
-                        )}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.75,
+                          }}
+                        >
+                          <span className="cat-toggle">▼</span>
+                          <span>{cat.name}</span>
+                          {cat.description && (
+                            <Tooltip title={cat.description}>
+                              <Box
+                                component="span"
+                                aria-label={`More details about ${cat.name}`}
+                                sx={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                              </Box>
+                            </Tooltip>
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell className="cat-score-cell wisdom-col" sx={{ fontFamily: "monospace" }}>
-                        {wCat}
-                        <Typography component="span" variant="caption" color="text.disabled" sx={{ fontSize: "0.625rem", ml: 0.75 }}>
-                          / {maxCat}
-                          {maxCat > 0 ? ` · ${pctCat}%` : ""}
-                        </Typography>
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            backgroundColor: pctColor(pctCat),
+                            color: "#fff",
+                            fontSize: "0.75rem",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {wCat}
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{ fontSize: "0.75rem", ml: 0.75, color: "inherit" }}
+                          >
+                            / {maxCat}
+                            {maxCat > 0 && (
+                              <>
+                                {" · "}
+                                <span className="pct-gradient-text">{pctCat}%</span>
+                              </>
+                            )}
+                          </Typography>
+                        </Box>
                       </TableCell>
                       {visible.map((c) => {
                         const ct = catCompTotal(cat, c, currentView, currentQuarter);
                         const pct = maxCat > 0 ? Math.round((ct / maxCat) * 100) : 0;
                         return (
                           <TableCell key={c} className="cat-score-cell" sx={{ fontFamily: "monospace" }}>
-                            {ct}
-                            <Typography component="span" variant="caption" color="text.disabled" sx={{ fontSize: "0.625rem", ml: 0.75 }}>
-                              / {maxCat}
-                              {maxCat > 0 ? ` · ${pct}%` : ""}
-                            </Typography>
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                px: 0.75,
+                                py: 0.25,
+                                borderRadius: 1,
+                                backgroundColor: pctColor(pct),
+                                color: "#fff",
+                                fontSize: "0.75rem",
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              {ct}
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{ fontSize: "0.75rem", ml: 0.75, color: "inherit" }}
+                              >
+                                / {maxCat}
+                                {maxCat > 0 && (
+                                  <>
+                                    {" · "}
+                                    <span className="pct-gradient-text">{pct}%</span>
+                                  </>
+                                )}
+                              </Typography>
+                            </Box>
                           </TableCell>
                         );
                       })}
@@ -1026,12 +1149,12 @@ export default function Home() {
                         >
                           <TableCell>
                             <div className="feat-name">{f.name}</div>
-                            <div className="feat-what">{trunc(f.what, 80)}</div>
+                            <div className="feat-what">{trunc(f.what, 140)}</div>
                           </TableCell>
                           <TableCell align="center" sx={{ bgcolor: "rgba(109, 40, 217, 0.03)" }}>
                             <span className={`score-pill ${scoreClass(wScore)}`}>{wScore}</span>
-                            <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 160, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                              {trunc(f.wisdom.description, 60)}
+                            <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 260, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                              {trunc(f.wisdom.description, 140)}
                             </Typography>
                             <span className={`readiness-tag ${rdClass}`}>{rdLabel}</span>
                           </TableCell>
@@ -1041,8 +1164,8 @@ export default function Home() {
                             return (
                               <TableCell key={c} align="center">
                                 <span className={`score-pill ${scoreClass(cs)}`}>{cs}</span>
-                                <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 160, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                  {trunc(cd?.description ?? "", 55)}
+                                <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: "0.625rem", mt: 0.5, maxWidth: 260, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                  {trunc(cd?.description ?? "", 140)}
                                 </Typography>
                               </TableCell>
                             );
