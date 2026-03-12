@@ -40,17 +40,15 @@ export function getWisdomScore(
   if (view === "ideal") return base;
 
   if (view === "real") {
-    if (f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta") {
-      return base;
-    }
-    return 0;
+    // Real Comparison (GA view): only score GA features, Beta/Planned = 0
+    return f.wisdom.readiness === "GA" ? base : 0;
   }
 
   if (view === "quarterly") {
+    // Target Release view: only score GA/Beta that are available by the selected quarter
     if (
-      isFeatureInQuarter(f, quarter) ||
-      f.wisdom.readiness === "GA" ||
-      f.wisdom.readiness === "Beta"
+      (f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta") &&
+      isFeatureInQuarter(f, quarter)
     ) {
       return base;
     }
@@ -66,13 +64,11 @@ export function isIncluded(
   quarter: string
 ): boolean {
   if (view === "ideal") return true;
-  if (view === "real")
-    return f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta";
+  if (view === "real") return f.wisdom.readiness === "GA";
   if (view === "quarterly")
     return (
-      isFeatureInQuarter(f, quarter) ||
-      f.wisdom.readiness === "GA" ||
-      f.wisdom.readiness === "Beta"
+      (f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta") &&
+      isFeatureInQuarter(f, quarter)
     );
   return true;
 }
@@ -96,7 +92,6 @@ export function catCompTotal(
 ): number {
   let t = 0;
   for (const f of cat.features) {
-    if (view === "real" && !isFeatureReady(f)) continue;
     if (view === "quarterly" && !isFeatureInQuarter(f, quarter)) continue;
     t += f.competitors[comp]?.score ?? 0;
   }

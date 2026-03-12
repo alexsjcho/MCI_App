@@ -182,11 +182,11 @@ describe("Competitor comparison page", () => {
     expect(genieStyle.maxWidth).toBe("none");
   });
 
-  it("scores WisdomAI beta features as 2 in Real Comparison and includes them in totals", async () => {
+  it("treats WisdomAI beta features as 0 in Real Comparison while still including them in totals", async () => {
     const user = userEvent.setup();
     render(<Home />);
 
-    // Switch to Real Comparison (GA-only before change)
+    // Switch to Real Comparison (GA view)
     const realTab = screen.getByRole("tab", { name: /real comparison/i });
     await user.click(realTab);
 
@@ -197,8 +197,8 @@ describe("Competitor comparison page", () => {
     expect(betaRow).not.toBeNull();
     if (!betaRow) return;
 
-    // WisdomAI score pill should show 2 (not 0 or original score)
-    const betaScore = within(betaRow).getByText("2");
+    // WisdomAI score pill should show 0 (beta does not get credit in Real view)
+    const betaScore = within(betaRow).getByText("0");
     expect(betaScore).toBeInTheDocument();
 
     // Automation & Self-Service category header should reflect 3 features (max 15)
@@ -212,7 +212,101 @@ describe("Competitor comparison page", () => {
     expect(totalText).toMatch(/\/\s*15\b/);
   });
 
-  it("positions the GA readiness tag in the top right of the WisdomAI cell", () => {
+  it("uses all features in category denominators for Real Comparison (e.g. Visualization & Dashboards = 15)", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const realTab = screen.getByRole("tab", { name: /real comparison/i });
+    await user.click(realTab);
+
+    const vizRow = screen
+      .getByText(/visualization & dashboards/i)
+      .closest("tr");
+    expect(vizRow).not.toBeNull();
+    if (!vizRow) return;
+
+    const totalText = vizRow.textContent || "";
+    expect(totalText).toMatch(/\/\s*15\b/);
+  });
+
+  it("uses all features in category denominators for Quarterly view (e.g. Visualization & Dashboards = 15) and only scores GA/Beta cells", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const quarterlyTab = screen.getByRole("tab", {
+      name: /target release/i,
+    });
+    await user.click(quarterlyTab);
+
+    const vizRow = screen
+      .getByText(/visualization & dashboards/i)
+      .closest("tr");
+    expect(vizRow).not.toBeNull();
+    if (!vizRow) return;
+
+    const totalText = vizRow.textContent || "";
+    expect(totalText).toMatch(/\/\s*15\b/);
+
+    // Code-Based Analysis is Planned, so WisdomAI score should be 0 in Quarterly view
+    const codeRow = screen
+      .getByText(/code-based analysis \(sql\/python\/r\)/i)
+      .closest("tr");
+    expect(codeRow).not.toBeNull();
+    if (!codeRow) return;
+
+    const wisdomScore = within(codeRow).getAllByText("0")[0];
+    expect(wisdomScore).toBeInTheDocument();
+  });
+
+  it("updates WisdomAI total per quarter in Target Release view based on GA/Beta availability", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const quarterlyTab = screen.getByRole("tab", {
+      name: /target release/i,
+    });
+    await user.click(quarterlyTab);
+
+    const getWisdomTotal = () => {
+      const candidates = screen.getAllByText(/wisdomai/i);
+      for (const el of candidates) {
+        const text = el.parentElement?.textContent || "";
+        const match = text.match(/(\d+)\s*\/\s*\d+/);
+        if (match) {
+          return Number(match[1]);
+        }
+      }
+      throw new Error("WisdomAI total not found");
+    };
+
+    const q1Total = getWisdomTotal();
+
+    const q4Button = screen.getByRole("button", { name: "Q4" });
+    await user.click(q4Button);
+
+    const q4Total = getWisdomTotal();
+
+    expect(q4Total).toBeGreaterThan(q1Total);
+  });
+
+  it("shows Databricks Genie scoring 13 out of 15 in Visualization & Dashboards for Real Comparison", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const realTab = screen.getByRole("tab", { name: /real comparison/i });
+    await user.click(realTab);
+
+    const vizRow = screen
+      .getByText(/visualization & dashboards/i)
+      .closest("tr");
+    expect(vizRow).not.toBeNull();
+    if (!vizRow) return;
+
+    const text = vizRow.textContent || "";
+    expect(text).toMatch(/\b13\s*\/\s*15\b/);
+  });
+
+  it("renders the GA readiness tag above the WisdomAI score in the cell", () => {
     render(<Home />);
 
     const nlqRow = screen
@@ -224,11 +318,16 @@ describe("Competitor comparison page", () => {
     const gaTag = within(nlqRow)
       .getAllByText("GA")
       .find((el) => el.className.includes("readiness-tag"));
+    const scorePill = within(nlqRow)
+      .getAllByText("5")
+      .find((el) => el.className.includes("score-pill"));
 
     expect(gaTag).toBeDefined();
-    if (!gaTag) return;
+    expect(scorePill).toBeDefined();
+    if (!gaTag || !scorePill) return;
 
-    expect(gaTag).toHaveStyle("position: absolute");
+    const relation = scorePill.compareDocumentPosition(gaTag);
+    expect(relation & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
   it("formats planned readiness labels using quarters and year", () => {

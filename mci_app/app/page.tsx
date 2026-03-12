@@ -178,7 +178,10 @@ export default function Home() {
     DATA.categories.forEach((cat) => {
       if (!visibleCategories.has(cat.name)) return;
       cat.features.forEach((f) => {
-        if (isIncluded(f, currentView, currentQuarter)) {
+        if (currentView === "real" || currentView === "quarterly") {
+          // In Real and Quarterly views, always count full potential for each feature
+          m += 5;
+        } else if (isIncluded(f, currentView, currentQuarter)) {
           m += 5;
         }
       });
@@ -211,27 +214,34 @@ export default function Home() {
 
   const wTotal = totalFor(true, null);
   const mp = maxPossibleForVisible();
-  const scores = [
+  const orderedCompetitors = React.useMemo(
+    () =>
+      [...visible].sort(
+        (a, b) => totalFor(false, b) - totalFor(false, a),
+      ),
+    [visible, currentView, currentQuarter, visibleCategories],
+  );
+  const scoreCards = [
     { name: "WisdomAI", total: wTotal, isWisdom: true as const },
-    ...visible.map((c) => ({
+    ...orderedCompetitors.map((c) => ({
       name: c,
       total: totalFor(false, c),
       isWisdom: false as const,
     })),
-  ].sort((a, b) => b.total - a.total);
-  const leaderTotal = scores[0]?.total ?? 0;
+  ];
+  const leaderTotal = scoreCards[0]?.total ?? 0;
   const isTwoCompanyView = visible.length === 1;
 
   const exportCSV = useCallback(() => {
     let csv =
       "Category,Feature,What,WisdomAI Score,Readiness,Expected Date";
-    visible.forEach((c) => (csv += `,"${c} Score","${c} Tier"`));
+    orderedCompetitors.forEach((c) => (csv += `,"${c} Score","${c} Tier"`));
     csv += "\n";
     DATA.categories.forEach((cat) => {
       cat.features.forEach((f) => {
         const ws = getWisdomScore(f, currentView, currentQuarter);
         csv += `"${cat.name}","${f.name}","${(f.what || "").replace(/"/g, '""')}",${ws},${f.wisdom.readiness},${f.wisdom.expectedDate}`;
-        visible.forEach((c) => {
+        orderedCompetitors.forEach((c) => {
           csv += `,${f.competitors[c]?.score ?? 0},"${COMP_TIERS[c]}"`;
         });
         csv += "\n";
@@ -307,6 +317,11 @@ export default function Home() {
           px: 2,
           py: 3,
           display: { xs: "none", md: "block" },
+          position: "sticky",
+          top: 0,
+          alignSelf: "flex-start",
+          bgcolor: "background.paper",
+          zIndex: 110,
         }}
       >
         <Typography
@@ -508,9 +523,9 @@ export default function Home() {
             overflowX: "auto",
           }}
         >
-          {scores.map((s) => {
+          {scoreCards.map((s, index) => {
             const isLeader = s.total === leaderTotal && !s.isWisdom;
-            const rank = scores.indexOf(s) + 1;
+            const rank = index + 1;
             const suf = rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
             const pct = mp > 0 ? Math.round((s.total / mp) * 100) : 0;
             return (
@@ -562,17 +577,28 @@ export default function Home() {
           })}
         </Box>
 
-        {/* Filters below score cards */}
+        {/* Sticky filters + legend */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: { xs: 2.5, md: 5 },
-            pb: 1.5,
-            pt: 0.5,
+            position: "sticky",
+            top: 64,
+            zIndex: 90,
+            bgcolor: "background.paper",
+            borderBottom: 1,
+            borderColor: "divider",
           }}
         >
+          {/* Filters below score cards */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: { xs: 2.5, md: 5 },
+              pb: 1.25,
+              pt: 0.75,
+            }}
+          >
           <Button
             size="small"
             variant="outlined"
@@ -928,21 +954,19 @@ export default function Home() {
               ))}
             </ButtonGroup>
           )}
-        </Box>
+          </Box>
 
-        {/* Legend below filters */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 2,
-            px: { xs: 2.5, md: 5 },
-            py: 1.5,
-            borderBottom: 1,
-            borderColor: "divider",
-          }}
-        >
+          {/* Legend below filters */}
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 2,
+              px: { xs: 2.5, md: 5 },
+              pb: 1.25,
+            }}
+          >
           <Typography variant="caption" fontWeight={600} color="text.secondary">
             Score Legend:
           </Typography>
@@ -998,6 +1022,7 @@ export default function Home() {
               On Roadmap
             </Typography>
           </Box>
+          </Box>
         </Box>
 
         {/* Table */}
@@ -1045,7 +1070,7 @@ export default function Home() {
                 >
                   WisdomAI
                 </TableCell>
-                {visible.map((c) => (
+                {orderedCompetitors.map((c) => (
                   <TableCell
                     key={c}
                     sx={{ minWidth: 220, borderBottom: 1, borderColor: "divider" }}
@@ -1066,9 +1091,12 @@ export default function Home() {
               ).map((cat) => {
                 const isCol = collapsedCategories.has(cat.name);
                 const wCat = catWisdomTotal(cat, currentView, currentQuarter);
-                const incCount = cat.features.filter((f) =>
-                  isIncluded(f, currentView, currentQuarter)
-                ).length;
+                const incCount =
+                  currentView === "real" || currentView === "quarterly"
+                    ? cat.features.length
+                    : cat.features.filter((f) =>
+                        isIncluded(f, currentView, currentQuarter),
+                      ).length;
                 const maxCat = incCount * 5;
                 const pctCat = maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
 
@@ -1156,7 +1184,7 @@ export default function Home() {
                           </Typography>
                         </Box>
                       </TableCell>
-                      {visible.map((c) => {
+                      {orderedCompetitors.map((c) => {
                         const ct = catCompTotal(cat, c, currentView, currentQuarter);
                         const pct = maxCat > 0 ? Math.round((ct / maxCat) * 100) : 0;
                         return (
@@ -1248,44 +1276,49 @@ export default function Home() {
                             align="center"
                             sx={{
                               bgcolor: "rgba(109, 40, 217, 0.03)",
-                              position: "relative",
                             }}
                             className={isPlannedNotIncluded ? "planned-muted" : undefined}
                           >
-                            <span className={`score-pill ${scoreClass(wScore)}`}>{wScore}</span>
-                            <Typography
-                              variant="caption"
-                              display="block"
-                              color="text.disabled"
-                              sx={{
-                                fontSize: "0.625rem",
-                                mt: 0.5,
-                                maxWidth: isTwoCompanyView ? "none" : 260,
-                                lineHeight: 1.3,
-                                display: "-webkit-box",
-                                WebkitLineClamp: isTwoCompanyView ? 6 : 3,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }}
-                              style={{
-                                textAlign: isTwoCompanyView ? "center" : undefined,
-                              }}
-                            >
-                              {trunc(f.wisdom.description, 140)}
-                            </Typography>
                             <Box
-                              component="span"
-                              className={`readiness-tag ${rdClass}`}
-                              style={{
-                                position: "absolute",
-                                top: 4,
-                                right: 8,
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 0.5,
                               }}
                             >
-                              {rdLabel}
+                              <Box sx={{ alignSelf: "flex-end" }}>
+                                <Box
+                                  component="span"
+                                  className={`readiness-tag ${rdClass}`}
+                                >
+                                  {rdLabel}
+                                </Box>
+                              </Box>
+                              <span className={`score-pill ${scoreClass(wScore)}`}>{wScore}</span>
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                color="text.disabled"
+                                sx={{
+                                  fontSize: "0.625rem",
+                                  mt: 0.5,
+                                  maxWidth: isTwoCompanyView ? "none" : 260,
+                                  lineHeight: 1.3,
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                }}
+                                style={{
+                                  textAlign: isTwoCompanyView ? "center" : undefined,
+                                }}
+                              >
+                                {trunc(f.wisdom.description, 140)}
+                              </Typography>
                             </Box>
                           </TableCell>
-                          {visible.map((c) => {
+                        {orderedCompetitors.map((c) => {
                             const cd = f.competitors[c];
                             const cs = cd?.score ?? 0;
                             return (
