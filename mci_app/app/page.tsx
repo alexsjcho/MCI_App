@@ -212,8 +212,6 @@ export default function Home() {
     return "#4ADE80"; // 91–100%: light green
   };
 
-  const wTotal = totalFor(true, null);
-  const mp = maxPossibleForVisible();
   const orderedCompetitors = React.useMemo(
     () =>
       [...visible].sort(
@@ -221,14 +219,26 @@ export default function Home() {
       ),
     [visible, currentView, currentQuarter, visibleCategories],
   );
-  const scoreCards = [
-    { name: "WisdomAI", total: wTotal, isWisdom: true as const },
-    ...orderedCompetitors.map((c) => ({
-      name: c,
-      total: totalFor(false, c),
-      isWisdom: false as const,
-    })),
-  ];
+  const wTotal = totalFor(true, null);
+  const mp = maxPossibleForVisible();
+
+  const competitorCards = orderedCompetitors.map((c) => ({
+    name: c,
+    total: totalFor(false, c),
+    isWisdom: false as const,
+  }));
+
+  const scoreCards =
+    wTotal >= (competitorCards[0]?.total ?? 0)
+      ? [
+        { name: "WisdomAI", total: wTotal, isWisdom: true as const },
+        ...competitorCards,
+      ]
+      : [
+        competitorCards[0],
+        { name: "WisdomAI", total: wTotal, isWisdom: true as const },
+        ...competitorCards.slice(1),
+      ];
   const leaderTotal = scoreCards[0]?.total ?? 0;
   const isTwoCompanyView = visible.length === 1;
 
@@ -395,120 +405,120 @@ export default function Home() {
               "& .MuiTabs-indicator": { bgcolor: "primary.main" },
             }}
           >
-              <Tab
-                value="ideal"
-                label={
-                  <Box
-                    component="span"
+            <Tab
+              value="ideal"
+              label={
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  Ideal Comparison
+                  <Chip
+                    label="Full"
+                    size="small"
                     sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.75,
+                      height: 18,
+                      fontSize: "0.625rem",
+                      bgcolor: "rgba(109, 40, 217, 0.15)",
+                      color: "primary.main",
                     }}
-                  >
-                    Ideal Comparison
-                    <Chip
-                      label="Full"
-                      size="small"
+                  />
+                  <Tooltip title={getViewDescription("ideal", currentQuarter)}>
+                    <Box
+                      component="span"
+                      aria-label="Ideal Comparison info"
                       sx={{
-                        height: 18,
-                        fontSize: "0.625rem",
-                        bgcolor: "rgba(109, 40, 217, 0.15)",
-                        color: "primary.main",
+                        display: "inline-flex",
+                        alignItems: "center",
                       }}
-                    />
-                    <Tooltip title={getViewDescription("ideal", currentQuarter)}>
-                      <Box
-                        component="span"
-                        aria-label="Ideal Comparison info"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        <InfoOutlinedIcon sx={{ fontSize: 16 }} />
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                }
-              />
-              <Tab
-                value="real"
-                label={
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.75,
-                    }}
-                  >
-                    Real Comparison
-                    <Chip
-                      label="GA"
-                      size="small"
-                      sx={{
-                        height: 18,
-                        fontSize: "0.625rem",
-                        bgcolor: "rgba(109, 40, 217, 0.15)",
-                        color: "primary.main",
-                      }}
-                    />
-                    <Tooltip title={getViewDescription("real", currentQuarter)}>
-                      <Box
-                        component="span"
-                        aria-label="Real Comparison info"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        <InfoOutlinedIcon sx={{ fontSize: 16 }} />
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                }
-              />
-              <Tab
-                value="quarterly"
-                label={
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.75,
-                    }}
-                  >
-                    Target Release
-                    <Chip
-                      label="QTR"
-                      size="small"
-                      sx={{
-                        height: 18,
-                        fontSize: "0.625rem",
-                        bgcolor: "rgba(109, 40, 217, 0.15)",
-                        color: "primary.main",
-                      }}
-                    />
-                    <Tooltip
-                      title={getViewDescription("quarterly", currentQuarter)}
                     >
-                      <Box
-                        component="span"
-                        aria-label="Target Release info"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        <InfoOutlinedIcon sx={{ fontSize: 16 }} />
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                }
-              />
-            </Tabs>
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </Box>
+                  </Tooltip>
+                </Box>
+              }
+            />
+            <Tab
+              value="real"
+              label={
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  Real Comparison
+                  <Chip
+                    label="GA"
+                    size="small"
+                    sx={{
+                      height: 18,
+                      fontSize: "0.625rem",
+                      bgcolor: "rgba(109, 40, 217, 0.15)",
+                      color: "primary.main",
+                    }}
+                  />
+                  <Tooltip title={getViewDescription("real", currentQuarter)}>
+                    <Box
+                      component="span"
+                      aria-label="Real Comparison info"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </Box>
+                  </Tooltip>
+                </Box>
+              }
+            />
+            <Tab
+              value="quarterly"
+              label={
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                  }}
+                >
+                  Target Release
+                  <Chip
+                    label="QTR"
+                    size="small"
+                    sx={{
+                      height: 18,
+                      fontSize: "0.625rem",
+                      bgcolor: "rgba(109, 40, 217, 0.15)",
+                      color: "primary.main",
+                    }}
+                  />
+                  <Tooltip
+                    title={getViewDescription("quarterly", currentQuarter)}
+                  >
+                    <Box
+                      component="span"
+                      aria-label="Target Release info"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                    </Box>
+                  </Tooltip>
+                </Box>
+              }
+            />
+          </Tabs>
         </Paper>
 
         {/* Summary bar */}
@@ -599,361 +609,360 @@ export default function Home() {
               pt: 0.75,
             }}
           >
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={handleFeatureMenuOpen}
-            endIcon={
-              <ExpandMoreIcon
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleFeatureMenuOpen}
+              endIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    fontSize: 16,
+                    transform: featureMenuOpen ? "rotate(180deg)" : "none",
+                  }}
+                />
+              }
+              sx={{
+                textTransform: "none",
+                fontSize: "0.75rem",
+                borderColor: "divider",
+                color: "text.secondary",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  color: "text.primary",
+                  bgcolor: "action.hover",
+                },
+              }}
+            >
+              Feature sets
+            </Button>
+            <Menu
+              anchorEl={featureAnchorEl}
+              open={featureMenuOpen}
+              onClose={handleFeatureMenuClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{
+                paper: {
+                  sx: { mt: 1.5, minWidth: 280, maxHeight: 380 },
+                },
+              }}
+            >
+              <Box
                 sx={{
-                  fontSize: 16,
-                  transform: featureMenuOpen ? "rotate(180deg)" : "none",
+                  px: 1.75,
+                  py: 1,
+                  borderBottom: 1,
+                  borderColor: "divider",
                 }}
-              />
-            }
-            sx={{
-              textTransform: "none",
-              fontSize: "0.75rem",
-              borderColor: "divider",
-              color: "text.secondary",
-              "&:hover": {
-                borderColor: "primary.main",
-                color: "text.primary",
-                bgcolor: "action.hover",
-              },
-            }}
-          >
-            Feature sets
-          </Button>
-          <Menu
-            anchorEl={featureAnchorEl}
-            open={featureMenuOpen}
-            onClose={handleFeatureMenuClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            transformOrigin={{ vertical: "top", horizontal: "right" }}
-            slotProps={{
-              paper: {
-                sx: { mt: 1.5, minWidth: 280, maxHeight: 380 },
-              },
-            }}
-          >
-            <Box
-              sx={{
-                px: 1.75,
-                py: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-              }}
-            >
-              <Typography
-                variant="caption"
-                color="text.disabled"
-                fontWeight={600}
               >
-                Show / Hide Feature Categories
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                px: 1.75,
-                py: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-              }}
-            >
-              <Button
-                size="small"
-                onClick={featureSelectAll}
-                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-              >
-                Select All
-              </Button>
-              <Button
-                size="small"
-                onClick={featureDeselectAll}
-                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-              >
-                Deselect All
-              </Button>
-            </Box>
-            {DATA.categories.map((cat) => {
-              const checked = visibleCategories.has(cat.name);
-              return (
-                <MenuItem
-                  key={cat.name}
-                  onClick={() => toggleCategoryVisibility(cat.name)}
-                  sx={{ py: 0.75 }}
+                <Typography
+                  variant="caption"
+                  color="text.disabled"
+                  fontWeight={600}
                 >
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    <Checkbox
-                      checked={checked}
-                      size="small"
-                      sx={{
-                        color: "primary.main",
-                        "&.Mui-checked": { color: "primary.main" },
+                  Show / Hide Feature Categories
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  px: 1.75,
+                  py: 1,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Button
+                  size="small"
+                  onClick={featureSelectAll}
+                  sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={featureDeselectAll}
+                  sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+                >
+                  Deselect All
+                </Button>
+              </Box>
+              {DATA.categories.map((cat) => {
+                const checked = visibleCategories.has(cat.name);
+                return (
+                  <MenuItem
+                    key={cat.name}
+                    onClick={() => toggleCategoryVisibility(cat.name)}
+                    sx={{ py: 0.75 }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Checkbox
+                        checked={checked}
+                        size="small"
+                        sx={{
+                          color: "primary.main",
+                          "&.Mui-checked": { color: "primary.main" },
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={cat.name}
+                      primaryTypographyProps={{
+                        fontSize: "0.8125rem",
+                        fontWeight: 500,
                       }}
                     />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={cat.name}
-                    primaryTypographyProps={{
-                      fontSize: "0.8125rem",
-                      fontWeight: 500,
-                    }}
-                  />
-                </MenuItem>
-              );
-            })}
-          </Menu>
+                  </MenuItem>
+                );
+              })}
+            </Menu>
 
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={handleCompMenuOpen}
-            endIcon={
-              <ExpandMoreIcon
-                sx={{
-                  fontSize: 16,
-                  transform: compMenuOpen ? "rotate(180deg)" : "none",
-                }}
-              />
-            }
-            sx={{
-              textTransform: "none",
-              fontSize: "0.75rem",
-              borderColor: "divider",
-              color: "text.secondary",
-              "&:hover": {
-                borderColor: "primary.main",
-                color: "text.primary",
-                bgcolor: "action.hover",
-              },
-            }}
-          >
-            Competitors
-            <Chip
-              label={visibleCompetitors[currentView].size}
+            <Button
               size="small"
+              variant="outlined"
+              onClick={handleCompMenuOpen}
+              endIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    fontSize: 16,
+                    transform: compMenuOpen ? "rotate(180deg)" : "none",
+                  }}
+                />
+              }
               sx={{
-                ml: 0.75,
-                height: 18,
-                minWidth: 18,
-                fontSize: "0.625rem",
-                fontWeight: 700,
-                bgcolor: "primary.main",
-                color: "#fff",
-                "& .MuiChip-label": { px: 0.75 },
-              }}
-            />
-          </Button>
-          <Menu
-            anchorEl={compAnchorEl}
-            open={compMenuOpen}
-            onClose={handleCompMenuClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            transformOrigin={{ vertical: "top", horizontal: "right" }}
-            slotProps={{
-              paper: {
-                sx: { mt: 1.5, minWidth: 320, maxHeight: 380 },
-              },
-            }}
-          >
-            <Box
-              sx={{
-                px: 1.75,
-                py: 1,
-                borderBottom: 1,
+                textTransform: "none",
+                fontSize: "0.75rem",
                 borderColor: "divider",
+                color: "text.secondary",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  color: "text.primary",
+                  bgcolor: "action.hover",
+                },
               }}
             >
-              <Typography
-                variant="caption"
-                color="text.disabled"
-                fontWeight={600}
-              >
-                Show / Hide Competitors
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                px: 1.75,
-                py: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-              }}
-            >
-              <ButtonGroup
+              Competitors
+              <Chip
+                label={visibleCompetitors[currentView].size}
                 size="small"
                 sx={{
+                  ml: 0.75,
+                  height: 18,
+                  minWidth: 18,
+                  fontSize: "0.625rem",
+                  fontWeight: 700,
+                  bgcolor: "primary.main",
+                  color: "#fff",
+                  "& .MuiChip-label": { px: 0.75 },
+                }}
+              />
+            </Button>
+            <Menu
+              anchorEl={compAnchorEl}
+              open={compMenuOpen}
+              onClose={handleCompMenuClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{
+                paper: {
+                  sx: { mt: 1.5, minWidth: 320, maxHeight: 380 },
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  px: 1.75,
+                  py: 1,
+                  borderBottom: 1,
                   borderColor: "divider",
-                  bgcolor: "#F4F2F8",
-                  "& .MuiButton-root": { borderColor: "divider" },
                 }}
               >
-                {(["Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
-                  <Button
-                    key={tier}
-                    onClick={() => {
-                      const next = activeTierFilter === tier ? "all" : tier;
-                      setActiveTierFilter(next);
-                      if (next !== "all") {
-                        applyTierSelection(tier);
-                      }
-                    }}
-                    className={`tier-filter-btn ${tierFilterTier(tier)} ${
-                      activeTierFilter === tier ? "active" : ""
-                    }`}
-                    sx={{
-                      textTransform: "none",
-                      fontSize: "0.6875rem",
-                      fontWeight: 600,
-                      px: 1.25,
-                      py: 0.625,
-                    }}
-                  >
-                    <Box
-                      component="span"
+                <Typography
+                  variant="caption"
+                  color="text.disabled"
+                  fontWeight={600}
+                >
+                  Show / Hide Competitors
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  px: 1.75,
+                  py: 1,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <ButtonGroup
+                  size="small"
+                  sx={{
+                    borderColor: "divider",
+                    bgcolor: "#F4F2F8",
+                    "& .MuiButton-root": { borderColor: "divider" },
+                  }}
+                >
+                  {(["Tier 1", "Tier 2", "Tier 3"] as const).map((tier) => (
+                    <Button
+                      key={tier}
+                      onClick={() => {
+                        const next = activeTierFilter === tier ? "all" : tier;
+                        setActiveTierFilter(next);
+                        if (next !== "all") {
+                          applyTierSelection(tier);
+                        }
+                      }}
+                      className={`tier-filter-btn ${tierFilterTier(tier)} ${activeTierFilter === tier ? "active" : ""
+                        }`}
                       sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 0.5,
+                        textTransform: "none",
+                        fontSize: "0.6875rem",
+                        fontWeight: 600,
+                        px: 1.25,
+                        py: 0.625,
                       }}
                     >
-                      {tier === "Tier 1"
-                        ? "T1"
-                        : tier === "Tier 2"
-                          ? "T2"
-                          : "T3"}
-                      <Tooltip title={tierInfoLabels[tier]}>
-                        <Box
-                          component="span"
-                          aria-label={tierInfoLabels[tier]}
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <InfoOutlinedIcon sx={{ fontSize: 14 }} />
-                        </Box>
-                      </Tooltip>
-                    </Box>
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        {tier === "Tier 1"
+                          ? "T1"
+                          : tier === "Tier 2"
+                            ? "T2"
+                            : "T3"}
+                        <Tooltip title={tierInfoLabels[tier]}>
+                          <Box
+                            component="span"
+                            aria-label={tierInfoLabels[tier]}
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                    </Button>
+                  ))}
+                </ButtonGroup>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  px: 1.75,
+                  py: 1,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Button
+                  size="small"
+                  onClick={compSelectAll}
+                  sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  onClick={compDeselectAll}
+                  sx={{ textTransform: "none", fontSize: "0.6875rem" }}
+                >
+                  Deselect All
+                </Button>
+              </Box>
+
+              <MenuItem disabled sx={{ opacity: 0.85 }}>
+                <ListItemIcon>
+                  <Checkbox
+                    checked
+                    size="small"
+                    sx={{
+                      color: "primary.dark",
+                      "&.Mui-checked": { color: "primary.dark" },
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary="WisdomAI"
+                  primaryTypographyProps={{
+                    fontWeight: 600,
+                    color: "primary.dark",
+                  }}
+                />
+                <LockIcon sx={{ fontSize: 14, color: "text.disabled" }} />
+              </MenuItem>
+              {COMP_NAMES.map((c) => {
+                const checked = visibleCompetitors[currentView].has(c);
+                const tc = tierClass(c);
+                return (
+                  <MenuItem
+                    key={c}
+                    onClick={() => toggleCompetitor(c)}
+                    sx={{ py: 0.75 }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Checkbox
+                        checked={checked}
+                        size="small"
+                        sx={{
+                          color: "primary.main",
+                          "&.Mui-checked": { color: "primary.main" },
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={c}
+                      primaryTypographyProps={{
+                        fontSize: "0.8125rem",
+                        fontWeight: 500,
+                      }}
+                    />
+                    <Chip
+                      label={COMP_TIERS[c]}
+                      size="small"
+                      className={`comp-tier-tag ${tc}`}
+                      sx={{ height: 18, fontSize: "0.5625rem" }}
+                    />
+                  </MenuItem>
+                );
+              })}
+            </Menu>
+
+            {currentView === "quarterly" && (
+              <ButtonGroup
+                size="small"
+                sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}
+              >
+                {["Q1", "Q2", "Q3", "Q4"].map((q) => (
+                  <Button
+                    key={q}
+                    onClick={() => setCurrentQuarter(q)}
+                    variant={currentQuarter === q ? "contained" : "text"}
+                    sx={{
+                      textTransform: "none",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      px: 1.75,
+                      py: 0.75,
+                      ...(currentQuarter === q && {
+                        boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)",
+                      }),
+                    }}
+                  >
+                    {q}
                   </Button>
                 ))}
               </ButtonGroup>
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                px: 1.75,
-                py: 1,
-                borderBottom: 1,
-                borderColor: "divider",
-              }}
-            >
-              <Button
-                size="small"
-                onClick={compSelectAll}
-                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-              >
-                Select All
-              </Button>
-              <Button
-                size="small"
-                onClick={compDeselectAll}
-                sx={{ textTransform: "none", fontSize: "0.6875rem" }}
-              >
-                Deselect All
-              </Button>
-            </Box>
-
-            <MenuItem disabled sx={{ opacity: 0.85 }}>
-              <ListItemIcon>
-                <Checkbox
-                  checked
-                  size="small"
-                  sx={{
-                    color: "primary.dark",
-                    "&.Mui-checked": { color: "primary.dark" },
-                  }}
-                />
-              </ListItemIcon>
-              <ListItemText
-                primary="WisdomAI"
-                primaryTypographyProps={{
-                  fontWeight: 600,
-                  color: "primary.dark",
-                }}
-              />
-              <LockIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-            </MenuItem>
-            {COMP_NAMES.map((c) => {
-              const checked = visibleCompetitors[currentView].has(c);
-              const tc = tierClass(c);
-              return (
-                <MenuItem
-                  key={c}
-                  onClick={() => toggleCompetitor(c)}
-                  sx={{ py: 0.75 }}
-                >
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    <Checkbox
-                      checked={checked}
-                      size="small"
-                      sx={{
-                        color: "primary.main",
-                        "&.Mui-checked": { color: "primary.main" },
-                      }}
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={c}
-                    primaryTypographyProps={{
-                      fontSize: "0.8125rem",
-                      fontWeight: 500,
-                    }}
-                  />
-                  <Chip
-                    label={COMP_TIERS[c]}
-                    size="small"
-                    className={`comp-tier-tag ${tc}`}
-                    sx={{ height: 18, fontSize: "0.5625rem" }}
-                  />
-                </MenuItem>
-              );
-            })}
-          </Menu>
-
-          {currentView === "quarterly" && (
-            <ButtonGroup
-              size="small"
-              sx={{ borderColor: "divider", bgcolor: "#F4F2F8" }}
-            >
-              {["Q1", "Q2", "Q3", "Q4"].map((q) => (
-                <Button
-                  key={q}
-                  onClick={() => setCurrentQuarter(q)}
-                  variant={currentQuarter === q ? "contained" : "text"}
-                  sx={{
-                    textTransform: "none",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    px: 1.75,
-                    py: 0.75,
-                    ...(currentQuarter === q && {
-                      boxShadow: "0 2px 8px rgba(109, 40, 217, 0.25)",
-                    }),
-                  }}
-                >
-                  {q}
-                </Button>
-              ))}
-            </ButtonGroup>
-          )}
+            )}
           </Box>
 
           {/* Legend below filters */}
@@ -967,66 +976,73 @@ export default function Home() {
               pb: 1.25,
             }}
           >
-          <Typography variant="caption" fontWeight={600} color="text.secondary">
-            Score Legend:
-          </Typography>
-          {[5, 4, 3, 2, 1].map((s) => (
-            <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 0.375,
-                  bgcolor: `var(--score-${s})`,
-                }}
-              />
+            <Typography variant="caption" fontWeight={600} color="text.secondary">
+              Score Legend:
+            </Typography>
+            {[5, 4, 3, 2, 1].map((s) => (
+              <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 0.375,
+                    bgcolor: `var(--score-${s})`,
+                  }}
+                />
+                <Typography variant="caption" color="text.disabled">
+                  {s} —{" "}
+                  {s >= 5
+                    ? "Strong"
+                    : s >= 4
+                      ? "Good"
+                      : s >= 3
+                        ? "Moderate"
+                        : s >= 2
+                          ? "Weak"
+                          : s >= 1
+                            ? "Minimal"
+                            : "None"}
+                </Typography>
+              </Box>
+            ))}
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.secondary"
+              sx={{ ml: 1 }}
+            >
+              Readiness:
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <span className="readiness-tag readiness-ga">GA</span>
               <Typography variant="caption" color="text.disabled">
-                {s} —{" "}
-                {s >= 5
-                  ? "Strong"
-                  : s >= 4
-                    ? "Good"
-                    : s >= 3
-                      ? "Moderate"
-                      : s >= 2
-                        ? "Weak"
-                        : s >= 1
-                          ? "Minimal"
-                          : "None"}
+                Generally Available
               </Typography>
             </Box>
-          ))}
-          <Typography
-            variant="caption"
-            fontWeight={600}
-            color="text.secondary"
-            sx={{ ml: 1 }}
-          >
-            Readiness:
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <span className="readiness-tag readiness-ga">GA</span>
-            <Typography variant="caption" color="text.disabled">
-              Generally Available
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <span className="readiness-tag readiness-beta">Beta</span>
-            <Typography variant="caption" color="text.disabled">
-              Public Beta
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <span className="readiness-tag readiness-planned">Planned</span>
-            <Typography variant="caption" color="text.disabled">
-              On Roadmap
-            </Typography>
-          </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <span className="readiness-tag readiness-beta">Beta</span>
+              <Typography variant="caption" color="text.disabled">
+                Public Beta
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <span className="readiness-tag readiness-planned">Planned</span>
+              <Typography variant="caption" color="text.disabled">
+                On Roadmap
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
         {/* Table */}
-        <TableContainer sx={{ overflowX: "auto", pb: 5 }}>
+        <TableContainer
+          sx={{
+            overflowX: "auto",
+            overflowY: "auto",
+            pb: 5,
+            maxHeight: "calc(100vh - 260px)",
+          }}
+        >
           <Table
             sx={{ minWidth: 1400 }}
             aria-label="AI analytics comparison matrix"
@@ -1034,7 +1050,17 @@ export default function Home() {
           >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ minWidth: 260, position: "sticky", left: 0, zIndex: 60, bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+                <TableCell
+                  sx={{
+                    minWidth: 260,
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 60,
+                    bgcolor: "background.paper",
+                    borderBottom: 1,
+                    borderColor: "divider",
+                  }}
+                >
                   <Box
                     sx={{
                       display: "flex",
@@ -1043,9 +1069,7 @@ export default function Home() {
                     }}
                   >
                     Feature
-                    <Tooltip
-                      title="Collapse or expand all feature categories"
-                    >
+                    <Tooltip title="Collapse or expand all feature categories">
                       <IconButton
                         size="small"
                         aria-label="Collapse all feature categories"
@@ -1057,32 +1081,46 @@ export default function Home() {
                     </Tooltip>
                   </Box>
                 </TableCell>
-                <TableCell
-                  sx={{
-                    minWidth: 180,
-                    bgcolor: "linear-gradient(180deg, rgba(109, 40, 217, 0.07), #fff)",
-                    background: "linear-gradient(180deg, rgba(109, 40, 217, 0.07), #fff)",
-                    color: "primary.dark",
-                    fontWeight: 600,
-                    borderBottom: 1,
-                    borderColor: "divider",
-                  }}
-                >
-                  WisdomAI
-                </TableCell>
-                {orderedCompetitors.map((c) => (
-                  <TableCell
-                    key={c}
-                    sx={{ minWidth: 220, borderBottom: 1, borderColor: "divider" }}
-                    align="left"
-                  >
-                    {c}
-                    <br />
-                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.5625rem" }}>
-                      {COMP_TIERS[c]}
-                    </Typography>
-                  </TableCell>
-                ))}
+                {scoreCards.map((s) =>
+                  s.isWisdom ? (
+                    <TableCell
+                      key={s.name}
+                      sx={{
+                        minWidth: 180,
+                        bgcolor:
+                          "linear-gradient(180deg, rgba(109, 40, 217, 0.07), #fff)",
+                        background:
+                          "linear-gradient(180deg, rgba(109, 40, 217, 0.07), #fff)",
+                        color: "primary.dark",
+                        fontWeight: 600,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                      }}
+                    >
+                      WisdomAI
+                    </TableCell>
+                  ) : (
+                    <TableCell
+                      key={s.name}
+                      sx={{
+                        minWidth: 220,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                      }}
+                      align="left"
+                    >
+                      {s.name}
+                      <br />
+                      <Typography
+                        variant="caption"
+                        color="text.disabled"
+                        sx={{ fontSize: "0.5625rem" }}
+                      >
+                        {COMP_TIERS[s.name]}
+                      </Typography>
+                    </TableCell>
+                  ),
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1095,8 +1133,8 @@ export default function Home() {
                   currentView === "real" || currentView === "quarterly"
                     ? cat.features.length
                     : cat.features.filter((f) =>
-                        isIncluded(f, currentView, currentQuarter),
-                      ).length;
+                      isIncluded(f, currentView, currentQuarter),
+                    ).length;
                 const maxCat = incCount * 5;
                 const pctCat = maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
 
@@ -1154,41 +1192,68 @@ export default function Home() {
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell className="cat-score-cell wisdom-col" sx={{ fontFamily: "monospace" }}>
-                        <Box
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: 1,
-                            backgroundColor: pctColor(pctCat),
-                            color: "#fff",
-                            fontSize: "0.75rem",
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          {wCat}
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            sx={{ fontSize: "0.75rem", ml: 0.75, color: "inherit" }}
-                          >
-                            / {maxCat}
-                            {maxCat > 0 && (
-                              <>
-                                {" · "}
-                                <span className="pct-gradient-text">{pctCat}%</span>
-                              </>
-                            )}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      {orderedCompetitors.map((c) => {
-                        const ct = catCompTotal(cat, c, currentView, currentQuarter);
-                        const pct = maxCat > 0 ? Math.round((ct / maxCat) * 100) : 0;
+                      {scoreCards.map((s) => {
+                        if (s.isWisdom) {
+                          return (
+                            <TableCell
+                              key={s.name}
+                              className="cat-score-cell wisdom-col"
+                              sx={{ fontFamily: "monospace" }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  backgroundColor: pctColor(pctCat),
+                                  color: "#fff",
+                                  fontSize: "0.75rem",
+                                  fontFamily: "inherit",
+                                }}
+                              >
+                                {wCat}
+                                <Typography
+                                  component="span"
+                                  variant="caption"
+                                  sx={{
+                                    fontSize: "0.75rem",
+                                    ml: 0.75,
+                                    color: "inherit",
+                                  }}
+                                >
+                                  / {maxCat}
+                                  {maxCat > 0 && (
+                                    <>
+                                      {" · "}
+                                      <span className="pct-gradient-text">
+                                        {pctCat}%
+                                      </span>
+                                    </>
+                                  )}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                          );
+                        }
+
+                        const c = s.name;
+                        const ct = catCompTotal(
+                          cat,
+                          c,
+                          currentView,
+                          currentQuarter,
+                        );
+                        const pct =
+                          maxCat > 0 ? Math.round((ct / maxCat) * 100) : 0;
+
                         return (
-                          <TableCell key={c} className="cat-score-cell" sx={{ fontFamily: "monospace" }}>
+                          <TableCell
+                            key={c}
+                            className="cat-score-cell"
+                            sx={{ fontFamily: "monospace" }}
+                          >
                             <Box
                               sx={{
                                 display: "inline-flex",
@@ -1206,13 +1271,19 @@ export default function Home() {
                               <Typography
                                 component="span"
                                 variant="caption"
-                                sx={{ fontSize: "0.75rem", ml: 0.75, color: "inherit" }}
+                                sx={{
+                                  fontSize: "0.75rem",
+                                  ml: 0.75,
+                                  color: "inherit",
+                                }}
                               >
                                 / {maxCat}
                                 {maxCat > 0 && (
                                   <>
                                     {" · "}
-                                    <span className="pct-gradient-text">{pct}%</span>
+                                    <span className="pct-gradient-text">
+                                      {pct}%
+                                    </span>
                                   </>
                                 )}
                               </Typography>
@@ -1318,9 +1389,53 @@ export default function Home() {
                               </Typography>
                             </Box>
                           </TableCell>
-                        {orderedCompetitors.map((c) => {
+                          {scoreCards.map((s) => {
+                            if (s.isWisdom) {
+                              return (
+                                <TableCell
+                                  key={s.name}
+                                  align="center"
+                                  className={
+                                    isPlannedNotIncluded && wScore <= 0
+                                      ? "planned-muted"
+                                      : undefined
+                                  }
+                                >
+                                  <span
+                                    className={`score-pill ${scoreClass(wScore)}`}
+                                  >
+                                    {wScore}
+                                  </span>
+                                  <Typography
+                                    variant="caption"
+                                    display="block"
+                                    color="text.disabled"
+                                    sx={{
+                                      fontSize: "0.625rem",
+                                      mt: 0.5,
+                                      maxWidth: isTwoCompanyView ? "none" : 260,
+                                      lineHeight: 1.3,
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                    }}
+                                    style={{
+                                      textAlign: isTwoCompanyView
+                                        ? "center"
+                                        : undefined,
+                                    }}
+                                  >
+                                    {trunc(f.wisdom.description, 140)}
+                                  </Typography>
+                                </TableCell>
+                              );
+                            }
+
+                            const c = s.name;
                             const cd = f.competitors[c];
                             const cs = cd?.score ?? 0;
+
                             return (
                               <TableCell
                                 key={c}
@@ -1331,7 +1446,11 @@ export default function Home() {
                                     : undefined
                                 }
                               >
-                                <span className={`score-pill ${scoreClass(cs)}`}>{cs}</span>
+                                <span
+                                  className={`score-pill ${scoreClass(cs)}`}
+                                >
+                                  {cs}
+                                </span>
                                 <Typography
                                   variant="caption"
                                   display="block"
@@ -1347,7 +1466,9 @@ export default function Home() {
                                     overflow: "hidden",
                                   }}
                                   style={{
-                                    textAlign: isTwoCompanyView ? "center" : undefined,
+                                    textAlign: isTwoCompanyView
+                                      ? "center"
+                                      : undefined,
                                   }}
                                 >
                                   {trunc(cd?.description ?? "", 140)}

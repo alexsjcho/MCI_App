@@ -123,6 +123,31 @@ describe("Competitor comparison page", () => {
     ).toBeTruthy();
   });
 
+  it("keeps the tabs, filters, legend, and table header visible by scrolling inside the table container", () => {
+    render(<Home />);
+
+    const table = screen.getByRole("table", {
+      name: /ai analytics comparison matrix/i,
+    });
+
+    const container = table.parentElement as HTMLElement;
+    const containerStyle = window.getComputedStyle(container);
+
+    // Vertical scrolling should happen inside the table container
+    expect(
+      ["auto", "scroll"].includes(containerStyle.overflowY),
+    ).toBeTruthy();
+    expect(containerStyle.maxHeight).not.toBe("");
+
+    // The table header should be configured as sticky
+    const headerCell = table.querySelector("thead th") as HTMLElement | null;
+    expect(headerCell).not.toBeNull();
+    if (!headerCell) return;
+
+    const headerStyle = window.getComputedStyle(headerCell);
+    expect(headerStyle.position).toBe("sticky");
+  });
+
   it("centers feature and competitor description text when only one competitor is visible", async () => {
     const user = userEvent.setup();
     render(<Home />);
