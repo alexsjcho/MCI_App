@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "@/app/page";
+import { DATA } from "@/lib/comparison-data";
+import { catWisdomTotal, isIncluded, type ViewMode } from "@/lib/helpers";
 
 describe("Competitor comparison page", () => {
   it("shows header with title and subtitle", () => {
@@ -123,6 +125,19 @@ describe("Competitor comparison page", () => {
     ).toBeTruthy();
   });
 
+  it("shows a count of selected feature sets next to the Feature sets filter label", () => {
+    render(<Home />);
+
+    const totalCategories = DATA.categories.length;
+    const featureButton = screen.getByRole("button", {
+      name: /feature sets/i,
+    });
+
+    expect(featureButton).toHaveTextContent(
+      new RegExp(`feature sets\\s*${totalCategories}`, "i"),
+    );
+  });
+
   it("orders summary cards by score so WisdomAI appears after higher-scoring competitors", () => {
     render(<Home />);
 
@@ -172,6 +187,79 @@ describe("Competitor comparison page", () => {
     assertBefore(ms, genie);
     assertBefore(genie, einstein);
     assertBefore(einstein, wisdom);
+  });
+
+  it("applies a Strong filter to show only feature categories where WisdomAI scores at least 80% in the current view", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const strongButton = screen.getByRole("button", { name: /strong/i });
+    await user.click(strongButton);
+
+    const currentView: ViewMode = "ideal";
+    const currentQuarter = "Q1";
+
+    const visibleCategoryNames = DATA.categories
+      .map((cat) => cat.name)
+      .filter((name) => screen.queryByText(new RegExp(name, "i")) !== null);
+
+    expect(visibleCategoryNames.length).toBeGreaterThan(0);
+
+    visibleCategoryNames.forEach((name) => {
+      const cat = DATA.categories.find((c) => c.name === name);
+      expect(cat).toBeDefined();
+      if (!cat) return;
+
+      const wCat = catWisdomTotal(cat, currentView, currentQuarter);
+      const includedCount =
+        currentView === "real" || currentView === "quarterly"
+          ? cat.features.length
+          : cat.features.filter((f) =>
+              isIncluded(f, currentView, currentQuarter),
+            ).length;
+      const maxCat = includedCount * 5;
+      const pctCat =
+        maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
+
+      expect(pctCat).toBeGreaterThanOrEqual(80);
+    });
+  });
+
+  it("applies a Weak filter to show only feature categories where WisdomAI scores under 50% in the current view", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const weakButton = screen.getByRole("button", { name: /weak/i });
+    await user.click(weakButton);
+
+    const currentView: ViewMode = "ideal";
+    const currentQuarter = "Q1";
+
+    const visibleCategoryNames = DATA.categories
+      .map((cat) => cat.name)
+      .filter((name) => screen.queryByText(new RegExp(name, "i")) !== null);
+
+    // There should be at least one weak category surfaced
+    expect(visibleCategoryNames.length).toBeGreaterThan(0);
+
+    visibleCategoryNames.forEach((name) => {
+      const cat = DATA.categories.find((c) => c.name === name);
+      expect(cat).toBeDefined();
+      if (!cat) return;
+
+      const wCat = catWisdomTotal(cat, currentView, currentQuarter);
+      const includedCount =
+        currentView === "real" || currentView === "quarterly"
+          ? cat.features.length
+          : cat.features.filter((f) =>
+              isIncluded(f, currentView, currentQuarter),
+            ).length;
+      const maxCat = includedCount * 5;
+      const pctCat =
+        maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
+
+      expect(pctCat).toBeLessThan(50);
+    });
   });
 
   it("keeps the tabs, filters, legend, and table header visible by scrolling inside the table container", () => {

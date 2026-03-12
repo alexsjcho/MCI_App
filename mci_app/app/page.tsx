@@ -84,6 +84,9 @@ export default function Home() {
     null
   );
   const featureMenuOpen = Boolean(featureAnchorEl);
+  const [strengthFilter, setStrengthFilter] = useState<
+    "all" | "strong" | "weak"
+  >("all");
 
   const visible = getVisibleCompetitors(
     visibleCompetitors[currentView],
@@ -154,11 +157,53 @@ export default function Home() {
 
   const featureSelectAll = useCallback(() => {
     setVisibleCategories(new Set(DATA.categories.map((cat) => cat.name)));
+    setStrengthFilter("all");
   }, []);
 
   const featureDeselectAll = useCallback(() => {
     setVisibleCategories(new Set());
+    setStrengthFilter("all");
   }, []);
+
+  const applyStrengthFilter = useCallback(
+    (kind: "strong" | "weak") => {
+      setStrengthFilter((prev) => {
+        const next = prev === kind ? "all" : kind;
+
+        if (next === "all") {
+          setVisibleCategories(
+            new Set(DATA.categories.map((cat) => cat.name)),
+          );
+          return next;
+        }
+
+        const filteredNames: string[] = [];
+        DATA.categories.forEach((cat) => {
+          const wCat = catWisdomTotal(cat, currentView, currentQuarter);
+          const includedCount =
+            currentView === "real" || currentView === "quarterly"
+              ? cat.features.length
+              : cat.features.filter((f) =>
+                  isIncluded(f, currentView, currentQuarter),
+                ).length;
+          const maxCat = includedCount * 5;
+          const pctCat =
+            maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
+
+          const isStrong = pctCat >= 80;
+          const isWeak = pctCat < 50;
+
+          if ((next === "strong" && isStrong) || (next === "weak" && isWeak)) {
+            filteredNames.push(cat.name);
+          }
+        });
+
+        setVisibleCategories(new Set(filteredNames));
+        return next;
+      });
+    },
+    [currentView, currentQuarter],
+  );
 
   const totalFor = (isWisdom: boolean, comp: string | null): number => {
     let t = 0;
@@ -635,6 +680,20 @@ export default function Home() {
               }}
             >
               Feature sets
+              <Chip
+                label={visibleCategories.size}
+                size="small"
+                sx={{
+                  ml: 0.75,
+                  height: 18,
+                  minWidth: 18,
+                  fontSize: "0.625rem",
+                  fontWeight: 700,
+                  bgcolor: "primary.main",
+                  color: "#fff",
+                  "& .MuiChip-label": { px: 0.75 },
+                }}
+              />
             </Button>
             <Menu
               anchorEl={featureAnchorEl}
@@ -937,6 +996,38 @@ export default function Home() {
                 );
               })}
             </Menu>
+
+            <ButtonGroup
+              size="small"
+              sx={{ ml: 1, borderColor: "divider", bgcolor: "#F4F2F8" }}
+            >
+              <Button
+                onClick={() => applyStrengthFilter("strong")}
+                variant={strengthFilter === "strong" ? "contained" : "text"}
+                sx={{
+                  textTransform: "none",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  px: 1.75,
+                  py: 0.75,
+                }}
+              >
+                Strong
+              </Button>
+              <Button
+                onClick={() => applyStrengthFilter("weak")}
+                variant={strengthFilter === "weak" ? "contained" : "text"}
+                sx={{
+                  textTransform: "none",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  px: 1.75,
+                  py: 0.75,
+                }}
+              >
+                Weak
+              </Button>
+            </ButtonGroup>
 
             {currentView === "quarterly" && (
               <ButtonGroup
