@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WisdomAI — Competitor Comparison Matrix",
+  title: "MCI",
   description:
     "Feature-level competitive intelligence across 8 competitors · Scored 0–5 per capability · Tiered by competitive threat level",
 };
