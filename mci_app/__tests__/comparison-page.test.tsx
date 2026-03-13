@@ -634,15 +634,90 @@ describe("Competitor comparison page", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders a left navigation menu with Diff Comparison marked as the current entry", () => {
+  it("renders a left navigation menu for Product Marketing with Features and Use Cases entries and icons", () => {
     render(<Home />);
 
     const nav = screen.getByRole("navigation", {
       name: /primary navigation/i,
     });
 
-    const diffItem = within(nav).getByText(/diff comparison/i);
-    expect(diffItem).toBeInTheDocument();
+    expect(
+      within(nav).getByText(/product marketing/i),
+    ).toBeInTheDocument();
+
+    const featuresButton = within(nav).getByRole("button", {
+      name: /features/i,
+    });
+    const useCasesButton = within(nav).getByRole("button", {
+      name: /use cases/i,
+    });
+
+    expect(
+      within(featuresButton).getByTestId("features-icon"),
+    ).toBeInTheDocument();
+    expect(
+      within(useCasesButton).getByTestId("use-cases-icon"),
+    ).toBeInTheDocument();
+  });
+
+  it("renders a toggle icon to collapse the left navigation", () => {
+    render(<Home />);
+
+    const collapseButton = screen.getByRole("button", {
+      name: /collapse navigation/i,
+    });
+
+    expect(collapseButton).toBeInTheDocument();
+  });
+
+  it("allows collapsing and expanding the left navigation from the toggle icon", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const nav = screen.getByRole("navigation", {
+      name: /primary navigation/i,
+    });
+
+    // Initially expanded, main label and items visible
+    expect(within(nav).getByText(/product marketing/i)).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("button", { name: /features/i }),
+    ).toBeInTheDocument();
+
+    const collapseButton = screen.getByRole("button", {
+      name: /collapse navigation/i,
+    });
+    await user.click(collapseButton);
+
+    // When collapsed, the toggle changes label but menu item icons remain visible
+    expect(
+      within(nav).getByTestId("features-icon"),
+    ).toBeInTheDocument();
+    expect(
+      within(nav).getByTestId("use-cases-icon"),
+    ).toBeInTheDocument();
+
+    // Toggle label should change to "Expand navigation"
+    const expandButton = screen.getByRole("button", {
+      name: /expand navigation/i,
+    });
+    await user.click(expandButton);
+
+    // Content should be visible again after expanding
+    expect(within(nav).getByText(/product marketing/i)).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("button", { name: /features/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("styles the left navigation to span the full viewport height", () => {
+    render(<Home />);
+
+    const nav = screen.getByRole("navigation", {
+      name: /primary navigation/i,
+    }) as HTMLElement;
+
+    expect(nav).toHaveStyle("height: 100vh");
   });
 
   it("shows view descriptions in tab info tooltips and removes inline description text", async () => {
