@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "@/app/page";
-import { DATA } from "@/lib/comparison-data";
-import { catWisdomTotal, isIncluded, type ViewMode } from "@/lib/helpers";
+import { DATA } from "@/app/features/comparison-data";
+import { catWisdomTotal, isIncluded, type ViewMode } from "@/app/features/helpers";
 
 describe("Competitor comparison page", () => {
   it("shows header with title and subtitle", () => {

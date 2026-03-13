@@ -72,7 +72,10 @@ const CRITERION_DETAILS: Record<string, CriterionDetail> = {
         "Competitors often surface copilot suggestions that require verification.",
       ],
       links: [
-        { label: "Gartner: Analytics & BI Platforms", url: "https://www.gartner.com/reviews/market/analytics-business-intelligence-platforms" },
+        {
+          label: "Gartner: Analytics & BI Platforms",
+          url: "https://www.gartner.com/reviews/market/analytics-business-intelligence-platforms",
+        },
       ],
     },
 };
@@ -80,7 +83,7 @@ const CRITERION_DETAILS: Record<string, CriterionDetail> = {
 export function getCriterionDetail(
   categoryName: string,
   featureName: string,
-  criterionKey: FeatureCriterionKey
+  criterionKey: FeatureCriterionKey,
 ): CriterionDetail {
   const key = `${categoryName}|${featureName}|${criterionKey}`;
   return CRITERION_DETAILS[key] ?? {};
@@ -93,7 +96,7 @@ export function getCompetitorCriterionDetail(
   categoryName: string,
   featureName: string,
   competitorName: string,
-  criterionKey: FeatureCriterionKey
+  criterionKey: FeatureCriterionKey,
 ): CriterionDetail {
   const key = `${categoryName}|${featureName}|${competitorName}|${criterionKey}`;
   return COMPETITOR_CRITERION_DETAILS[key] ?? {};
@@ -102,7 +105,7 @@ export function getCompetitorCriterionDetail(
 /** Per-criterion scores for a competitor on a feature. Derived from the single competitor score so total matches. */
 export function getCompetitorCriteriaScores(
   f: Feature,
-  competitorName: string
+  competitorName: string,
 ): Record<FeatureCriterionKey, number> {
   const base = Number(f.competitors[competitorName]?.score ?? 0);
   return {
@@ -167,7 +170,7 @@ function scoreCorrelatedMessaging(
   wisdomScore: number,
   compScore: number,
   wisdomDesc: string,
-  compDesc: string
+  compDesc: string,
 ): MessagingPositioning {
   const w = Math.round(wisdomScore);
   const c = Math.round(compScore);
@@ -251,7 +254,7 @@ function defaultMessagingPositioning(
   categoryName: string,
   featureName: string,
   competitorName: string,
-  compDescription: string
+  compDescription: string,
 ): MessagingPositioning {
   const category = DATA.categories.find((c) => c.name === categoryName);
   const feature = category?.features.find((f) => f.name === featureName);
@@ -265,7 +268,7 @@ function defaultMessagingPositioning(
     wisdomScore,
     compScore,
     wisdomDesc,
-    compDescription
+    compDescription,
   );
 }
 
@@ -273,7 +276,7 @@ export function getMessagingPositioning(
   categoryName: string,
   featureName: string,
   competitorName: string,
-  compDescription: string
+  compDescription: string,
 ): MessagingPositioning {
   const key = `${categoryName}|${featureName}|${competitorName}`;
   const stored = MESSAGING_POSITIONING[key];
@@ -282,7 +285,7 @@ export function getMessagingPositioning(
     categoryName,
     featureName,
     competitorName,
-    compDescription
+    compDescription,
   );
 }
 
@@ -334,7 +337,7 @@ export function isFeatureNewInQuarter(f: Feature, q: string): boolean {
 export function getWisdomScore(
   f: Feature,
   view: ViewMode,
-  quarter: string
+  quarter: string,
 ): number {
   const base = wisdomBaseScoreFromCriteria(f);
 
@@ -362,7 +365,7 @@ export function getWisdomScore(
 export function isIncluded(
   f: Feature,
   view: ViewMode,
-  quarter: string
+  quarter: string,
 ): boolean {
   if (view === "ideal") return true;
   if (view === "real") return f.wisdom.readiness === "GA";
@@ -377,11 +380,11 @@ export function isIncluded(
 export function catWisdomTotal(
   cat: Category,
   view: ViewMode,
-  quarter: string
+  quarter: string,
 ): number {
   return cat.features.reduce(
     (s, f) => s + getWisdomScore(f, view, quarter),
-    0
+    0,
   );
 }
 
@@ -389,7 +392,7 @@ export function catCompTotal(
   cat: Category,
   comp: string,
   view: ViewMode,
-  quarter: string
+  quarter: string,
 ): number {
   let t = 0;
   for (const f of cat.features) {
@@ -403,7 +406,7 @@ export function overallTotal(
   isWisdom: boolean,
   comp: string | null,
   view: ViewMode,
-  quarter: string
+  quarter: string,
 ): number {
   let t = 0;
   DATA.categories.forEach((cat) => {
@@ -450,7 +453,7 @@ export function trunc(str: string | undefined, len: number): string {
 
 export function getVisibleCompetitors(
   visibleSet: Set<string>,
-  tierFilter: string
+  tierFilter: string,
 ): string[] {
   return COMP_NAMES.filter((c) => {
     if (!visibleSet.has(c)) return false;
@@ -459,3 +462,4 @@ export function getVisibleCompetitors(
     return true;
   });
 }
+
