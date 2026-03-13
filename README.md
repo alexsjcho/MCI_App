@@ -28,29 +28,47 @@ The primary app is a Next.js app in the `mci_app` directory.
 
 ## Competitor Comparison Matrix — Business Logic
 
-The Competitor Comparison Matrix visualizes feature-level parity between WisdomAI and a fixed set of competitors.
+The Competitor Comparison Matrix visualizes feature-level parity between WisdomAI and a fixed set of competitors and powers a set of interactive views, filters, and explanations for sales and product teams.
 
 ### Views & inclusion logic
 
 - **Ideal Comparison**
-  - Uses the feature's authored score (`wisdom.score`).
+  - Uses the feature's authored score (`wisdom.score`) derived from the feature’s criteria model.
   - All WisdomAI features are included regardless of readiness.
 - **Real Comparison (GA view)**
-  - Only features where `readiness = GA` are included.
-  - GA features use their base score; Beta/Planned features count as 0.
+  - Only features where `readiness = GA` are scored for WisdomAI; GA features use their base score, Beta/Planned features count as 0.
+  - Category and overall denominators still assume the full set of features in that category (e.g. 3 features → `15` max points), so Real Comparison is a “brutal facts” view of how much of the vision is GA today.
 - **Target Release (Quarterly view)**
-  - Includes only GA or Beta features whose `expectedDate` is on or before the selected quarter end.
-  - Those features use their base score; everything else is treated as 0.
+  - WisdomAI only scores GA or Beta features whose `expectedDate` is on or before the selected quarter end.
+  - As in Real view, denominators for categories and overall scores always use the full set of features (each feature contributes up to 5 points), so progress is shown as “delivered vs. full potential by quarter”.
 
-### Scoring model
+### Feature readiness labels
 
-- Each feature has a WisdomAI score from **0–5**.
-- Per category and per competitor totals are sums of feature scores:
-  - **WisdomAI category total**: sum of `getWisdomScore(feature, view, quarter)` for all included features in that category.
-  - **Competitor category total**: sum of the competitor's 0–5 scores for all included features in that category.
+- **GA** and **Beta** tags are rendered directly above the WisdomAI score pill in each cell.
+- **Planned** features use the `expectedDate` to compute a human-readable quarter label:
+  - If the date is valid, the label is `Planned: Q{quarter} {year}` (e.g. `Planned: Q3 2026`).
+  - If the date is missing or invalid, the label falls back to plain `Planned`.
+- In non-ideal views, WisdomAI and unsupported competitor cells for **Planned** features are visually muted to make it clear they do not contribute to current scores.
+
+### Feature-level scoring model & breakdown
+
+- Each feature has an authored WisdomAI score from **0–5**, but internally a 5‑criterion rubric is used:
+  - **User Pain Point Resolution**
+  - **Ease of Use (UX/UI Friction)**
+  - **Depth of Functionality**
+  - **Reliability & Performance**
+  - **Unique Value Proposition (Differentiator)**
+- For now, each criterion reuses the same base `wisdom.score` so totals stay consistent; the criteria exist to support richer explanations and future weighting.
+- A **Feature score breakdown** modal is available from the magnifying-glass icon in WisdomAI cells:
+  - Shows all five criteria, their descriptions, and any stored rationale (explanations, examples, and links) for that feature and criterion.
+
+### Category, competitor, and overall totals
+
+- **WisdomAI category total** is the sum of `getWisdomScore(feature, view, quarter)` for all features in that category.
+- **Competitor category total** is the sum of the competitor’s 0–5 scores for all features in that category; quarterly views only limit WisdomAI based on `expectedDate`, competitor scores do not change per quarter.
 - **Overall totals** (summary cards at the top):
-  - WisdomAI and each competitor's total is the sum of their category totals, restricted to the currently visible feature categories.
-  - `maxPossible` is computed as `5 * number_of_included_features`, so the summary shows `total / max` and a percentage.
+  - WisdomAI and each competitor’s total is the sum of their category totals, restricted to the currently visible feature categories.
+  - The denominator `maxPossible` is computed as `5 * number_of_features_across_visible_categories`, regardless of view; Real and Target Release views adjust only the **numerator** by zeroing out excluded WisdomAI features.
 
 ### Score legend & pill colors
 
@@ -66,6 +84,7 @@ Individual 0–5 scores use a discrete color scale (`--score-1` … `--score-5`)
 
 Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function based on the total percentage:
 
+- **0%**: Muted gray `#A8A2B4`
 - **1–20%**: Red `#EF4444`
 - **21–40%**: Red‑Orange `#F15A24`
 - **41–60%**: Orange `#F97316`
@@ -74,11 +93,35 @@ Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function b
 - **81–90%**: Dark Green `#166534`
 - **91–100%**: Light Green `#4ADE80`
 
-### Tiering & filters
+### Tiering, filters, and layout
 
 - Each competitor is assigned a **tier** (`Tier 1`, `Tier 2`, `Tier 3`).
-- **Tier filters** (T1, T2, T3) drive which competitors are visible:
-  - Selecting T1, T2, or T3 in the Competitors menu auto-selects all competitors in that tier and hides others.
-  - Toggling the active tier off returns to the "all tiers" state.
-- **Feature sets filter** allows hiding entire feature categories; this also recalculates summary scores and percentages based only on the visible categories.
+- The **Competitors** dropdown provides:
+  - **Tier filters** (T1, T2, T3) that auto-select all competitors in that tier and hide the rest; turning a tier off returns to the “all tiers” state.
+  - A list of individual competitors with checkboxes, so you can create focused comparisons (including a two-company view where description text expands to full width and centers).
+- The **Feature sets** dropdown controls which feature categories are visible:
+  - Hiding a category removes its rows from the table and from all totals/percentages.
+  - The button label shows the count of selected categories out of the total.
+- **Strong / Weak** quick filters:
+  - **Strong** shows only categories where WisdomAI achieves at least **80%** of the available points in the current view.
+  - **Weak** shows only categories where WisdomAI is below **50%**.
+  - These filters work against the current view (Ideal, Real, or Target Release) and respect the same denominator rules as the main scores.
+- The matrix uses a scrollable container with a sticky header so tabs, filters, legend, and table headers remain visible while scrolling.
+
+### Messaging & positioning helper
+
+- For each `(category, feature, competitor)` triple the app can generate messaging guidance that is correlated to the underlying scores:
+  - A **short**, **medium**, and **long** response a rep can say to a prospect.
+  - A **hook** (“what the competitor will say”), a **flaw**, a **counter-position**, and a **landmine question**.
+- The helper:
+  - Rounds WisdomAI and competitor scores to 0–5 and maps them to semantic labels (`absent`, `minimal`, `comparable`, `solid`, `leading`, `dominant`).
+  - Builds narratives that differ depending on whether WisdomAI is ahead, behind, or tied on that feature.
+
+### CSV export
+
+- The **Export** button downloads a CSV snapshot of the current comparison, including:
+  - Category, feature, and `what` description.
+  - WisdomAI score, readiness, and expected date.
+  - For each visible competitor: score and tier.
+- The filename includes the active view and, for Target Release, the selected quarter (e.g. `wisdomai-comparison-quarterly-Q4.csv`).
 

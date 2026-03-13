@@ -25,8 +25,15 @@ import IconButton from "@mui/material/IconButton";
 import { DATA, COMP_NAMES, COMP_TIERS } from "@/lib/comparison-data";
 import type { ViewMode } from "@/lib/helpers";
 import {
+  FEATURE_CRITERIA_META,
   catCompTotal,
   catWisdomTotal,
+  getCompetitorCriteriaScores,
+  getCompetitorCriterionDetail,
+  getCriterionDetail,
+  getFeatureCriteriaScores,
+  getMessagingPositioning,
+  getScoreSemantic,
   getVisibleCompetitors,
   getWisdomScore,
   isFeatureNewInQuarter,
@@ -41,6 +48,24 @@ import LockIcon from "@mui/icons-material/Lock";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import SearchIcon from "@mui/icons-material/Search";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Link from "@mui/material/Link";
+import SvgIcon from "@mui/material/SvgIcon";
+
+function SwordIcon(props: React.ComponentProps<typeof SvgIcon>) {
+  return (
+    <SvgIcon {...props} viewBox="0 0 24 24">
+      <path d="M12 2v20M8 10h8M11 2h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    </SvgIcon>
+  );
+}
 
 const VIEW_DESCRIPTIONS: Record<ViewMode, string> = {
   ideal:
@@ -87,6 +112,21 @@ export default function Home() {
   const [strengthFilter, setStrengthFilter] = useState<
     "all" | "strong" | "weak"
   >("all");
+  const [scoreModalFeature, setScoreModalFeature] = useState<{
+    categoryName: string;
+    featureName: string;
+    competitor?: string;
+  } | null>(null);
+  const [messagingModal, setMessagingModal] = useState<{
+    categoryName: string;
+    featureName: string;
+    competitorName: string;
+  } | null>(null);
+  const [responseTab, setResponseTab] = useState<"short" | "medium" | "long">("short");
+
+  useEffect(() => {
+    if (messagingModal) setResponseTab("short");
+  }, [messagingModal]);
 
   const visible = getVisibleCompetitors(
     visibleCompetitors[currentView],
@@ -184,8 +224,8 @@ export default function Home() {
             currentView === "real" || currentView === "quarterly"
               ? cat.features.length
               : cat.features.filter((f) =>
-                  isIncluded(f, currentView, currentQuarter),
-                ).length;
+                isIncluded(f, currentView, currentQuarter),
+              ).length;
           const maxCat = includedCount * 5;
           const pctCat =
             maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
@@ -355,6 +395,49 @@ export default function Home() {
     });
   };
 
+  const formatScore = (value: number): string => {
+    const n = Number(value) || 0;
+    return Number.isInteger(n) ? `${n}` : n.toFixed(2);
+  };
+
+  const clamp420 = (text: string): string => {
+    const t = (text || "").trim().replace(/\s+/g, " ");
+    if (t.length <= 420) return t;
+    return `${t.slice(0, 417).trimEnd()}…`;
+  };
+
+  const autoCriterionExplanation = (args: {
+    companyName: string;
+    scoreVal: number;
+    featureWhat: string;
+    cellDescription: string;
+  }): string => {
+    const { companyName, scoreVal, featureWhat, cellDescription } = args;
+    const what = (featureWhat || "").trim();
+    const evidence = (cellDescription || "").trim();
+    const semantic = getScoreSemantic(scoreVal);
+
+    if (scoreVal >= 4) {
+      return clamp420(
+        `${companyName} is ${semantic} here because ${evidence || "they deliver strongly on this."} ` +
+        (what ? `In practice: ${what}. ` : "") +
+        `When your prospect brings it up: "They do well here—where we go further is on outcomes and adoption, not just the feature. Happy to show you."`
+      );
+    }
+    if (scoreVal >= 3) {
+      return clamp420(
+        `${companyName} is ${semantic} here—${evidence || "solid but not best-in-class."} ` +
+        (what ? `${what}. ` : "") +
+        `You can say: "They’re decent here; the gap shows up in real-world use and reliability. We’d rather you compare end-to-end than this one knob."`
+      );
+    }
+    return clamp420(
+      `${companyName} is ${semantic} here: ${evidence || "limited."} ` +
+      (what ? `${what}. ` : "") +
+      `Use it when they object: "We lead here and I’d be happy to show you the difference in a quick call so you can see it yourself."`
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -424,7 +507,7 @@ export default function Home() {
             className="header-title"
             sx={{ fontSize: "1.75rem", fontWeight: 700 }}
           >
-            Competitor Comparison Matrix
+            Feature Comparison Matrix
           </Typography>
         </Paper>
 
@@ -1435,91 +1518,87 @@ export default function Home() {
                             <div className="feat-name">{f.name}</div>
                             <div className="feat-what">{trunc(f.what, 140)}</div>
                           </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              bgcolor: "rgba(109, 40, 217, 0.03)",
-                            }}
-                            className={isPlannedNotIncluded ? "planned-muted" : undefined}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Box sx={{ alignSelf: "flex-end" }}>
-                                <Box
-                                  component="span"
-                                  className={`readiness-tag ${rdClass}`}
-                                >
-                                  {rdLabel}
-                                </Box>
-                              </Box>
-                              <span className={`score-pill ${scoreClass(wScore)}`}>{wScore}</span>
-                              <Typography
-                                variant="caption"
-                                display="block"
-                                color="text.disabled"
-                                sx={{
-                                  fontSize: "0.625rem",
-                                  mt: 0.5,
-                                  maxWidth: isTwoCompanyView ? "none" : 260,
-                                  lineHeight: 1.3,
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: isTwoCompanyView ? 6 : 3,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                }}
-                                style={{
-                                  textAlign: isTwoCompanyView ? "center" : undefined,
-                                }}
-                              >
-                                {trunc(f.wisdom.description, 140)}
-                              </Typography>
-                            </Box>
-                          </TableCell>
                           {scoreCards.map((s) => {
                             if (s.isWisdom) {
                               return (
                                 <TableCell
                                   key={s.name}
                                   align="center"
+                                  sx={{
+                                    bgcolor: "rgba(109, 40, 217, 0.03)",
+                                  }}
                                   className={
-                                    isPlannedNotIncluded && wScore <= 0
-                                      ? "planned-muted"
-                                      : undefined
+                                    isPlannedNotIncluded ? "planned-muted" : undefined
                                   }
                                 >
-                                  <span
-                                    className={`score-pill ${scoreClass(wScore)}`}
-                                  >
-                                    {wScore}
-                                  </span>
-                                  <Typography
-                                    variant="caption"
-                                    display="block"
-                                    color="text.disabled"
+                                  <Box
                                     sx={{
-                                      fontSize: "0.625rem",
-                                      mt: 0.5,
-                                      maxWidth: isTwoCompanyView ? "none" : 260,
-                                      lineHeight: 1.3,
-                                      display: "-webkit-box",
-                                      WebkitLineClamp: isTwoCompanyView ? 6 : 3,
-                                      WebkitBoxOrient: "vertical",
-                                      overflow: "hidden",
-                                    }}
-                                    style={{
-                                      textAlign: isTwoCompanyView
-                                        ? "center"
-                                        : undefined,
+                                      position: "relative",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      gap: 0.5,
                                     }}
                                   >
-                                    {trunc(f.wisdom.description, 140)}
-                                  </Typography>
+                                    <IconButton
+                                      size="small"
+                                      aria-label={`View score breakdown for ${f.name}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setScoreModalFeature({
+                                          categoryName: cat.name,
+                                          featureName: f.name,
+                                          competitor: undefined,
+                                        });
+                                      }}
+                                      sx={{
+                                        position: "absolute",
+                                        top: -4,
+                                        left: -4,
+                                        bgcolor: "rgba(255,255,255,0.9)",
+                                        boxShadow: 1,
+                                        "&:hover": { bgcolor: "background.paper" },
+                                      }}
+                                    >
+                                      <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                    <Box sx={{ alignSelf: "flex-end" }}>
+                                      <Box
+                                        component="span"
+                                        className={`readiness-tag ${rdClass}`}
+                                      >
+                                        {rdLabel}
+                                      </Box>
+                                    </Box>
+                                    <span
+                                      className={`score-pill ${scoreClass(wScore)}`}
+                                    >
+                                      {formatScore(wScore)}
+                                    </span>
+                                    <Typography
+                                      variant="caption"
+                                      display="block"
+                                      color="text.disabled"
+                                      sx={{
+                                        fontSize: "0.625rem",
+                                        mt: 0.5,
+                                        maxWidth: isTwoCompanyView ? "none" : 260,
+                                        lineHeight: 1.3,
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                        pl: 3,
+                                      }}
+                                      style={{
+                                        textAlign: isTwoCompanyView
+                                          ? "center"
+                                          : undefined,
+                                      }}
+                                    >
+                                      {trunc(f.wisdom.description, 140)}
+                                    </Typography>
+                                  </Box>
                                 </TableCell>
                               );
                             }
@@ -1538,33 +1617,90 @@ export default function Home() {
                                     : undefined
                                 }
                               >
-                                <span
-                                  className={`score-pill ${scoreClass(cs)}`}
-                                >
-                                  {cs}
-                                </span>
-                                <Typography
-                                  variant="caption"
-                                  display="block"
-                                  color="text.disabled"
+                                <Box
                                   sx={{
-                                    fontSize: "0.625rem",
-                                    mt: 0.5,
-                                    maxWidth: isTwoCompanyView ? "none" : 260,
-                                    lineHeight: 1.3,
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: isTwoCompanyView ? 6 : 3,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                  }}
-                                  style={{
-                                    textAlign: isTwoCompanyView
-                                      ? "center"
-                                      : undefined,
+                                    position: "relative",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    gap: 0.5,
                                   }}
                                 >
-                                  {trunc(cd?.description ?? "", 140)}
-                                </Typography>
+                                  <IconButton
+                                    size="small"
+                                    aria-label={`View score breakdown for ${f.name} — ${c}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setScoreModalFeature({
+                                        categoryName: cat.name,
+                                        featureName: f.name,
+                                        competitor: c,
+                                      });
+                                    }}
+                                    sx={{
+                                      position: "absolute",
+                                      top: -4,
+                                      left: -4,
+                                      bgcolor: "rgba(255,255,255,0.9)",
+                                      boxShadow: 1,
+                                      "&:hover": { bgcolor: "background.paper" },
+                                    }}
+                                  >
+                                    <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                  <Tooltip title="Messaging & Positioning">
+                                    <IconButton
+                                      size="small"
+                                      aria-label={`Messaging and positioning vs ${c} for ${f.name}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMessagingModal({
+                                          categoryName: cat.name,
+                                          featureName: f.name,
+                                          competitorName: c,
+                                        });
+                                      }}
+                                      sx={{
+                                        position: "absolute",
+                                        top: 22,
+                                        left: -4,
+                                        bgcolor: "rgba(255,255,255,0.9)",
+                                        boxShadow: 1,
+                                        "&:hover": { bgcolor: "background.paper" },
+                                      }}
+                                    >
+                                      <SwordIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <span
+                                    className={`score-pill ${scoreClass(cs)}`}
+                                  >
+                                    {formatScore(cs)}
+                                  </span>
+                                  <Typography
+                                    variant="caption"
+                                    display="block"
+                                    color="text.disabled"
+                                    sx={{
+                                      fontSize: "0.625rem",
+                                      mt: 0.5,
+                                      maxWidth: isTwoCompanyView ? "none" : 260,
+                                      lineHeight: 1.3,
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: isTwoCompanyView ? 6 : 3,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                      pl: 3,
+                                    }}
+                                    style={{
+                                      textAlign: isTwoCompanyView
+                                        ? "center"
+                                        : undefined,
+                                    }}
+                                  >
+                                    {trunc(cd?.description ?? "", 140)}
+                                  </Typography>
+                                </Box>
                               </TableCell>
                             );
                           })}
@@ -1578,6 +1714,337 @@ export default function Home() {
           </Table>
         </TableContainer>
       </Box>
+      <Dialog
+        open={Boolean(scoreModalFeature)}
+        onClose={() => setScoreModalFeature(null)}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="feature-score-breakdown-title"
+      >
+        {scoreModalFeature && (() => {
+          const category = DATA.categories.find(
+            (c) => c.name === scoreModalFeature.categoryName,
+          );
+          const feature = category?.features.find(
+            (ff) => ff.name === scoreModalFeature.featureName,
+          );
+          if (!category || !feature) return null;
+
+          const isCompetitor = Boolean(scoreModalFeature.competitor);
+          const competitorName = scoreModalFeature.competitor;
+          const criteria = isCompetitor && competitorName
+            ? getCompetitorCriteriaScores(feature, competitorName)
+            : getFeatureCriteriaScores(feature);
+          const score = isCompetitor && competitorName
+            ? (feature.competitors[competitorName]?.score ?? 0)
+            : getWisdomScore(feature, currentView, currentQuarter);
+          const scoreLabel = isCompetitor && competitorName
+            ? `Total ${competitorName} score`
+            : "Total WisdomAI score";
+
+          return (
+            <>
+              <DialogTitle id="feature-score-breakdown-title">
+                {isCompetitor && competitorName
+                  ? `Feature Score Breakdown — ${competitorName}`
+                  : "Feature Score Breakdown"}
+              </DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                  {category.name}
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  {feature.name}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  {scoreLabel}:{" "}
+                  <strong>{formatScore(score)}</strong> / 5
+                </Typography>
+                {FEATURE_CRITERIA_META.map((meta) => {
+                  const rawDetail =
+                    isCompetitor && competitorName
+                      ? getCompetitorCriterionDetail(
+                        category.name,
+                        feature.name,
+                        competitorName,
+                        meta.key,
+                      )
+                      : getCriterionDetail(category.name, feature.name, meta.key);
+                  const scoreVal = criteria[meta.key] ?? 0;
+                  const companyName =
+                    isCompetitor && competitorName ? competitorName : "WisdomAI";
+                  const cellDescription =
+                    isCompetitor && competitorName
+                      ? (feature.competitors[competitorName]?.description ?? "")
+                      : feature.wisdom.description;
+
+                  const detail = {
+                    ...rawDetail,
+                    explanation:
+                      rawDetail.explanation ||
+                      autoCriterionExplanation({
+                        companyName,
+                        scoreVal,
+                        featureWhat: feature.what,
+                        cellDescription,
+                      }),
+                  };
+                  return (
+                    <Accordion
+                      key={meta.key}
+                      disableGutters
+                      sx={{
+                        boxShadow: "none",
+                        "&:before": { display: "none" },
+                        borderBottom: 1,
+                        borderColor: "divider",
+                        "&:last-of-type": { borderBottom: 0 },
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls={`criterion-${meta.key}-content`}
+                        id={`criterion-${meta.key}-header`}
+                        sx={{
+                          "& .MuiAccordionSummary-content": {
+                            alignItems: "center",
+                            gap: 1,
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontSize: "0.875rem", flex: 1 }}
+                        >
+                          {meta.title}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: 40,
+                            height: 24,
+                            borderRadius: 1,
+                            bgcolor: "rgba(109, 40, 217, 0.06)",
+                            fontSize: "0.8125rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {formatScore(scoreVal)}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ pt: 0, flexDirection: "column" }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: "0.75rem", mb: 1 }}
+                        >
+                          {meta.description}
+                        </Typography>
+                        {detail.explanation ? (
+                          <Typography
+                            variant="body2"
+                            sx={{ mb: 1, fontSize: "0.8125rem" }}
+                          >
+                            {detail.explanation}
+                          </Typography>
+                        ) : null}
+                        {detail.examples && detail.examples.length > 0 ? (
+                          <Box component="ul" sx={{ m: 0, pl: 2, mb: 1 }}>
+                            {detail.examples.map((ex, i) => (
+                              <Typography
+                                component="li"
+                                key={i}
+                                variant="body2"
+                                sx={{ fontSize: "0.8125rem", mb: 0.5 }}
+                              >
+                                {ex}
+                              </Typography>
+                            ))}
+                          </Box>
+                        ) : null}
+                        {detail.links && detail.links.length > 0 ? (
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                            {detail.links.map((l, i) => (
+                              <Link
+                                key={i}
+                                href={l.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                variant="body2"
+                                sx={{ fontSize: "0.8125rem" }}
+                              >
+                                {l.label}
+                              </Link>
+                            ))}
+                          </Box>
+                        ) : null}
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setScoreModalFeature(null)}>Close</Button>
+              </DialogActions>
+            </>
+          );
+        })()}
+      </Dialog>
+      <Dialog
+        open={Boolean(messagingModal)}
+        onClose={() => setMessagingModal(null)}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="messaging-positioning-title"
+      >
+        {messagingModal && (() => {
+          const mp = getMessagingPositioning(
+            messagingModal.categoryName,
+            messagingModal.featureName,
+            messagingModal.competitorName,
+            (() => {
+              const cat = DATA.categories.find(
+                (c) => c.name === messagingModal.categoryName,
+              );
+              const feat = cat?.features.find(
+                (f) => f.name === messagingModal.featureName,
+              );
+              return (
+                feat?.competitors[messagingModal.competitorName]?.description ?? ""
+              );
+            })(),
+          );
+          return (
+            <>
+              <DialogTitle id="messaging-positioning-title">
+                Messaging &amp; Positioning
+              </DialogTitle>
+              <DialogContent dividers>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  {messagingModal.featureName} vs {messagingModal.competitorName}
+                </Typography>
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                  Response
+                </Typography>
+                <Tabs
+                  value={responseTab}
+                  onChange={(_, v) => setResponseTab(v as "short" | "medium" | "long")}
+                  sx={{
+                    minHeight: 36,
+                    mb: 1,
+                    "& .MuiTab-root": { minHeight: 36, py: 0.5, px: 1.5, fontSize: "0.75rem" },
+                    "& .MuiTabs-indicator": { bgcolor: "primary.main" },
+                  }}
+                >
+                  <Tab label="Short (280)" value="short" />
+                  <Tab label="Medium (280–560)" value="medium" />
+                  <Tab label="Long (560–1000)" value="long" />
+                </Tabs>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 2,
+                    p: 1.5,
+                    bgcolor: "action.hover",
+                    borderRadius: 1,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {responseTab === "short"
+                    ? mp.responseShort
+                    : responseTab === "medium"
+                      ? mp.responseMedium
+                      : mp.responseLong}
+                </Typography>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Messaging &amp; Positioning Framework
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.25,
+                  }}
+                >
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "info.main",
+                      bgcolor: "rgba(59, 130, 246, 0.04)",
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="info.dark">
+                      The Competitor&apos;s Hook
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: "0.8125rem", mt: 0.5 }}>
+                      {mp.hook}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "error.main",
+                      bgcolor: "rgba(239, 68, 68, 0.04)",
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="error.dark">
+                      The Flaw in the Logic
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: "0.8125rem", mt: 0.5 }}>
+                      {mp.flaw}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "info.main",
+                      bgcolor: "rgba(14, 165, 233, 0.04)",
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="info.dark">
+                      Our Counter-Positioning
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: "0.8125rem", mt: 0.5 }}>
+                      {mp.counter}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "warning.main",
+                      bgcolor: "rgba(245, 158, 11, 0.08)",
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={700} color="warning.dark">
+                      Landmine Question
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: "0.8125rem", mt: 0.5 }}>
+                      {mp.landmine}
+                    </Typography>
+                  </Paper>
+                </Box>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setMessagingModal(null)}>Close</Button>
+              </DialogActions>
+            </>
+          );
+        })()}
+      </Dialog>
     </Box>
   );
 }

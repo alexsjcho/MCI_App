@@ -138,6 +138,44 @@ describe("Competitor comparison page", () => {
     );
   });
 
+  it("opens a feature score breakdown modal with five criteria when clicking the magnifying glass in a WisdomAI cell", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const nlqRow = screen
+      .getByText(/natural language query \(nlq\)/i)
+      .closest("tr");
+    expect(nlqRow).not.toBeNull();
+    if (!nlqRow) return;
+
+    const breakdownButton = within(nlqRow).getByRole("button", {
+      name: /view score breakdown for natural language query \(nlq\)/i,
+    });
+
+    await user.click(breakdownButton);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: /feature score breakdown/i,
+    });
+    expect(dialog).toBeInTheDocument();
+
+    expect(
+      within(dialog).getByText(/user pain point resolution/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/ease of use \(ux\/ui friction\)/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/depth of functionality/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/reliability & performance/i),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/unique value proposition/i),
+    ).toBeInTheDocument();
+  });
+
   it("orders summary cards by score so WisdomAI appears after higher-scoring competitors", () => {
     render(<Home />);
 
@@ -187,6 +225,28 @@ describe("Competitor comparison page", () => {
     assertBefore(ms, genie);
     assertBefore(genie, einstein);
     assertBefore(einstein, wisdom);
+  });
+
+  it("does not render extra competitor columns beyond the table header", () => {
+    render(<Home />);
+
+    const table = screen.getByRole("table", {
+      name: /ai analytics comparison matrix/i,
+    });
+
+    const rows = within(table).getAllByRole("row");
+    const headerRow = rows[0];
+    const headerCells = within(headerRow).getAllByRole("columnheader");
+
+    const nlqRow = screen
+      .getByText(/natural language query \(nlq\)/i)
+      .closest("tr");
+    expect(nlqRow).not.toBeNull();
+    if (!nlqRow) return;
+
+    const bodyCells = within(nlqRow).getAllByRole("cell");
+
+    expect(bodyCells.length).toBe(headerCells.length);
   });
 
   it("applies a Strong filter to show only feature categories where WisdomAI scores at least 80% in the current view", async () => {
@@ -314,6 +374,7 @@ describe("Competitor comparison page", () => {
       /genie spaces with unity catalog context/i,
     );
     expect(genieDesc).toHaveStyle("text-align: center");
+    expect(genieDesc).toHaveStyle("padding-left: 24px");
   });
 
   it("lets descriptions use full cell width in two-company comparison", async () => {
