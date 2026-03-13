@@ -125,3 +125,64 @@ Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function b
   - For each visible competitor: score and tier.
 - The filename includes the active view and, for Target Release, the selected quarter (e.g. `wisdomai-comparison-quarterly-Q4.csv`).
 
+## Use Case Matrix — Business Logic
+
+The Use Case Matrix is a separate page (`/use-cases`) that maps real-world customer scenarios to personas, industries, challenges, outcomes, and competitor positioning. It is driven entirely from structured data in `use-case-data.ts`.
+
+### Core concepts
+
+- **Personas** (`PERSONAS`):
+  - Examples: Data Analyst, Data Engineer, Business User, CDO / Data Leader, Developer / Data Scientist.
+- **Industries** (`INDUSTRIES`):
+  - Examples: Financial Services, Healthcare, Retail & E‑Commerce, Technology / SaaS, Manufacturing.
+- **Challenges** (`CHALLENGES`):
+  - Examples: Slow Time-to-Insight, Data Silos & Fragmentation, Lack of Self-Service, Inconsistent Metrics, Compliance & Security Risk, Collaboration Gaps, Missed Anomalies, Dashboard Bottleneck, Vendor Lock-In, Technical Skill Barrier.
+- **Outcome categories** (`OUTCOME_CATEGORIES`):
+  - Group use cases into themes like Decision Velocity, Operational Efficiency, and Trust & Governance.
+- **Key metrics** (`KEY_METRICS`):
+  - Each use case is tied to a primary success metric (e.g. Mean Time to Insight, ETL Cost Reduction / Analyst Leverage Ratio, Query Accuracy % / Active Non-Technical Users).
+
+### Use case model
+
+Each entry in `USE_CASES` represents one concrete scenario, with:
+
+- **Identity & framing**
+  - `id`: stable identifier (e.g. `uc-01`).
+  - `title`: plain-language description of the user’s goal (e.g. “Ask follow-up questions in plain English without rewriting SQL”).
+  - `persona`, `industries[]`, `challenge`, `outcomeCategory`, `keyMetric`, `relatedProduct`.
+- **Solution & outcomes**
+  - `features[]`: key WisdomAI capabilities that solve the use case.
+  - `expectedOutcome`: narrative statement of the business result (before/after).
+  - `before` / `after`: structured metrics (label + value) describing the measurable change (e.g. “Query iteration cycle: 15–30 min per revision → < 30 sec follow-up”).
+- **Competitive scoring & notes**
+  - `scores`: 0–5 scores for WisdomAI and each competitor, using the same competitive scale as the comparison matrix.
+  - `notes`: short positioning blurbs per competitor explaining *why* each score was assigned (e.g. strengths, gaps, maturity).
+
+### Competitors and tiers
+
+- **Tiers** (`TIERS`):
+  - T1 (Direct Threats), T2 (Adjacent Players), T3 (Emerging) — used to label competitors and support tiered narratives.
+- **Competitors** (`COMPETITORS`):
+  - Each competitor has `id`, `name`, `short` label, `tier`, and a display color.
+  - These attributes are reused across use cases for consistent labels and visual identity.
+
+### Page behavior & layout
+
+- The `/use-cases` page renders inside the shared `ProductMarketingNav` layout with **Use Cases** marked as the active entry.
+- At the top of the page, a header summarizes:
+  - The total count of available use cases.
+  - A short description that this is a clickable matrix (“click any row to expand details”).
+- The main body presents:
+  - Column headers for **Persona**, **Industry**, **Challenge**, **Outcome**, and **Key Metric** to orient sales/product users.
+  - A row per use case that can be **expanded/collapsed**:
+    - The collapsed row shows the title and key context.
+    - Expanding a row reveals the **Expected Outcome** narrative and supporting details.
+- A small “Show” control row introduces future filtering by **Wins / Ties / Trails** against competitors; in the current implementation, it is purely presentational (no filtering logic yet).
+
+### How this relates to the comparison matrix
+
+- The Use Case Matrix reuses the same competitors and 0–5 scoring model as the Competitor Comparison Matrix but is organized around **business stories** instead of features.
+- This allows:
+  - Sales to start with a customer outcome (“Get weekly AI-generated KPI summaries”) and see how WisdomAI vs. competitors stack up for that scenario.
+  - Product marketing to maintain a single place (`use-case-data.ts`) for persona x industry x challenge narratives, expected outcomes, and competitive notes.
+
