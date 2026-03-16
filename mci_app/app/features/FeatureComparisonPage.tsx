@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-key */
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -23,12 +23,10 @@ import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
-import DownloadIcon from "@mui/icons-material/Download";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
-import SearchIcon from "@mui/icons-material/Search";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -105,13 +103,6 @@ export default function FeatureComparisonPage() {
     featureName: string;
     competitorName: string;
   } | null>(null);
-  const [responseTab, setResponseTab] = useState<"short" | "medium" | "long">(
-    "short",
-  );
-
-  useEffect(() => {
-    if (messagingModal) setResponseTab("short");
-  }, [messagingModal]);
 
   const visible = getVisibleCompetitors(
     visibleCompetitors[currentView],
@@ -289,30 +280,6 @@ export default function FeatureComparisonPage() {
   });
   const leaderTotal = scoreCards[0]?.total ?? 0;
   const isTwoCompanyView = visible.length === 1;
-
-  const exportCSV = useCallback(() => {
-    let csv =
-      "Category,Feature,What,WisdomAI Score,Readiness,Expected Date";
-    orderedCompetitors.forEach((c) => (csv += `,"${c} Score","${c} Tier"`));
-    csv += "\n";
-    DATA.categories.forEach((cat) => {
-      cat.features.forEach((f) => {
-        const ws = getWisdomScore(f, currentView, currentQuarter);
-        csv += `"${cat.name}","${f.name}","${(f.what || "").replace(/"/g, '""')}",${ws},${f.wisdom.readiness},${f.wisdom.expectedDate}`;
-        orderedCompetitors.forEach((c) => {
-          csv += `,${f.competitors[c]?.score ?? 0},"${COMP_TIERS[c]}"`;
-        });
-        csv += "\n";
-      });
-    });
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `wisdomai-comparison-${currentView}${currentView === "quarterly" ? `-${currentQuarter}` : ""}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [currentView, currentQuarter, orderedCompetitors]);
 
   const applyTierSelection = (tier: "Tier 1" | "Tier 2" | "Tier 3") => {
     setVisibleCompetitors((prev) => ({
@@ -1022,27 +989,6 @@ export default function FeatureComparisonPage() {
             )}
 
             <Box sx={{ flexGrow: 1 }} />
-
-            <Tooltip title="Export comparison to CSV">
-              <IconButton
-                aria-label="Export comparison to CSV"
-                size="small"
-                onClick={exportCSV}
-              >
-                <DownloadIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Search within comparison matrix">
-              <span>
-                <IconButton
-                  aria-label="Search within comparison matrix"
-                  size="small"
-                  disabled
-                >
-                  <SearchIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
           </Box>
 
           <Box
@@ -1878,51 +1824,92 @@ export default function FeatureComparisonPage() {
                 <Typography
                   variant="subtitle2"
                   color="text.secondary"
-                  sx={{ mb: 0.5 }}
+                  sx={{ mb: 1.5 }}
                 >
                   {messagingModal.featureName} vs{" "}
                   {messagingModal.competitorName}
                 </Typography>
-                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                  Response
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  SPY Framework
                 </Typography>
-                <Tabs
-                  value={responseTab}
-                  onChange={(_, v) =>
-                    setResponseTab(v as "short" | "medium" | "long")
-                  }
+                <Box
                   sx={{
-                    minHeight: 36,
-                    mb: 1,
-                    "& .MuiTab-root": {
-                      minHeight: 36,
-                      py: 0.5,
-                      px: 1.5,
-                      fontSize: "0.75rem",
-                    },
-                    "& .MuiTabs-indicator": { bgcolor: "primary.main" },
-                  }}
-                >
-                  <Tab label="Short (280)" value="short" />
-                  <Tab label="Medium (280–560)" value="medium" />
-                  <Tab label="Long (560–1000)" value="long" />
-                </Tabs>
-                <Typography
-                  variant="body2"
-                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.25,
                     mb: 2,
-                    p: 1.5,
-                    bgcolor: "action.hover",
-                    borderRadius: 1,
-                    fontSize: "0.875rem",
                   }}
                 >
-                  {responseTab === "short"
-                    ? mpData.responseShort
-                    : responseTab === "medium"
-                      ? mpData.responseMedium
-                      : mpData.responseLong}
-                </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "primary.main",
+                      bgcolor: "rgba(109, 40, 217, 0.04)",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="primary.dark"
+                    >
+                      So What
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8125rem", mt: 0.5 }}
+                    >
+                      {mpData.soWhat}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "success.main",
+                      bgcolor: "rgba(34, 197, 94, 0.04)",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="success.dark"
+                    >
+                      Prove It
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8125rem", mt: 0.5 }}
+                    >
+                      {mpData.proveIt}
+                    </Typography>
+                  </Paper>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.25,
+                      borderLeft: 3,
+                      borderColor: "secondary.main",
+                      bgcolor: "rgba(156, 39, 176, 0.04)",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="secondary.dark"
+                    >
+                      Why You
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8125rem", mt: 0.5 }}
+                    >
+                      {mpData.whyYou}
+                    </Typography>
+                  </Paper>
+                </Box>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Messaging &amp; Positioning Framework
                 </Typography>

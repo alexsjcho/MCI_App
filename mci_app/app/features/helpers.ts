@@ -117,14 +117,14 @@ export function getCompetitorCriteriaScores(
   };
 }
 
-/** Messaging & positioning from WisdomAI's perspective vs competitor. */
+/** Messaging & positioning from WisdomAI's perspective vs competitor (SPY Framework). */
 export type MessagingPositioning = {
-  /** Response: Short summary, max 280 chars. */
-  responseShort: string;
-  /** Response: Medium summary 280–560 chars. */
-  responseMedium: string;
-  /** Response: Long summary 560–1000 chars. */
-  responseLong: string;
+  /** So What: Why this matters to the prospect right now. */
+  soWhat: string;
+  /** Prove It: Evidence, references, or data points that back the claim. */
+  proveIt: string;
+  /** Why You: Why WisdomAI is the right choice over the competitor. */
+  whyYou: string;
   /** What the competitor tells the prospect. */
   hook: string;
   /** The flaw in that logic / reality. */
@@ -137,7 +137,7 @@ export type MessagingPositioning = {
 
 const MESSAGING_POSITIONING: Record<string, MessagingPositioning> = {};
 
-/** Competitive Edge Scoring Rubric: score → semantic description (no raw "X/5" in copy). */
+/** Competitive Edge Scoring Rubric: score -> semantic description (no raw "X/5" in copy). */
 const SCORE_SEMANTIC: Record<number, string> = {
   0: "absent",
   1: "minimal",
@@ -158,12 +158,6 @@ function truncateSnippet(s: string, max = 140): string {
   return t.slice(0, max).trimEnd();
 }
 
-function clampLength(s: string, _min: number, max: number): string {
-  const t = s.replace(/\s+/g, " ").trim();
-  if (t.length <= max) return t;
-  return t.slice(0, max).trimEnd();
-}
-
 function scoreCorrelatedMessaging(
   featureName: string,
   competitorName: string,
@@ -179,70 +173,65 @@ function scoreCorrelatedMessaging(
   const ourEdge = (wisdomDesc || "our approach").slice(0, 60);
   const theirAngle = (compDesc || "their approach").slice(0, 50);
 
-  // Build long narrative first (target 560–1000 chars). Voice: what you say to the prospect.
-  let longNarrative: string;
-  if (w > c) {
-    longNarrative =
-      `When they bring up ${competitorName} on ${featureName}, you can say: “We’re ${ourSemantic} here—they’re ${theirSemantic}. The difference is we focus on ${ourEdge}. So your team gets real adoption and fewer headaches, not just another tool that looks good in a demo.” ` +
-      `If they push back, lean on that gap and ask how often their current or alternative solution actually gets used day to day. ` +
-      `You can add: “Customers tell us the gap shows up in time-to-value and how much their teams rely on it week over week. Happy to share a reference or walk through a real workflow so you can see the difference.”`;
-  } else if (w < c) {
-    longNarrative =
-      `When they say ${competitorName} is stronger on ${featureName}, you can say: “They’re ${theirSemantic} on that one piece—we’re ${ourSemantic}. What we’ve seen is that matters less than how it fits into how people work. With us, ${ourEdge}. So the feature gets used, not just demoed. I’d rather you compare total value and where we lead than this single checkbox.” ` +
-      `Then pivot to capabilities where we win and to proof—references, benchmarks—so they see the full picture. ` +
-      `You can say: “If you’d like, we can do a side-by-side in your environment so you can judge adoption and fit, not just the feature list.”`;
-  } else {
-    longNarrative =
-      `When they say ${competitorName} is similar on ${featureName}, you can say: “We’re both ${ourSemantic} here. Where we pull ahead is how it works in practice: ${ourEdge}. So your team isn’t adding another silo; they’re extending how they already work.” ` +
-      `Offer to walk through a real workflow or a customer story so they see the difference. ` +
-      `Add: “A lot of evaluations stop at the demo. We’re happy to show you how this plugs into your existing tools and who on your team would actually use it day to day.”`;
-  }
-
-  const responseShort = truncateSnippet(longNarrative, 280);
-  const responseMedium =
-    longNarrative.length > 280 ? clampLength(longNarrative, 281, 560) : longNarrative;
-  const responseLong =
-    longNarrative.length > 560 ? clampLength(longNarrative, 561, 1000) : longNarrative;
-
-  // Hook: what the competitor tells the prospect (script they'll hear).
+  let soWhat: string;
+  let proveIt: string;
+  let whyYou: string;
   let hook: string;
   let flaw: string;
   let counter: string;
   let landmine: string;
 
   if (w > c) {
+    soWhat =
+      `Your team needs ${featureName} that actually works in production, not just in a demo. ${competitorName} is ${theirSemantic} here, which means your people will hit friction fast. That slows adoption and kills ROI before you even get started.`;
+    proveIt =
+      `WisdomAI is ${ourSemantic} on ${featureName} vs. ${competitorName}'s ${theirSemantic}. Customers report faster time-to-value and higher weekly active usage because we focus on ${ourEdge}. Ask for a reference call or a side-by-side in your environment to see the gap firsthand.`;
+    whyYou =
+      `We built ${featureName} around ${ourEdge}, so your team adopts it day one, not day never. With WisdomAI you get outcomes and adoption, not just a checkbox on a slide.`;
     hook =
-      `What ${competitorName} will tell your prospect: “We have strong ${featureName}—${theirAngle}.”`;
+      `What ${competitorName} will tell your prospect: "We have strong ${featureName} - ${theirAngle}."`;
     flaw =
-      `What you can say back: “The gap is real—we’re ${ourSemantic} here and they’re ${theirSemantic}. Their approach still leaves teams with a lot of manual work and friction. I’d ask how often that actually slows your people down.”`;
+      `What you can say back: "The gap is real. We're ${ourSemantic} here and they're ${theirSemantic}. Their approach still leaves teams with a lot of manual work and friction. I'd ask how often that actually slows your people down."`;
     counter =
-      `Your line: “With WisdomAI, we’re ${ourSemantic} on ${featureName} because we focus on ${ourEdge}. So you get adoption and outcomes, not just a feature that looks good in a slide. Want to see it in a real workflow?”`;
+      `Your line: "With WisdomAI, we're ${ourSemantic} on ${featureName} because we focus on ${ourEdge}. So you get adoption and outcomes, not just a feature that looks good in a slide. Want to see it in a real workflow?"`;
     landmine =
-      `Ask your prospect: “When this kind of feature is slow or breaks, how quickly does your team today get back on track—and how often does that happen with ${competitorName}?”`;
+      `Ask your prospect: "When this kind of feature is slow or breaks, how quickly does your team today get back on track, and how often does that happen with ${competitorName}?"`;
   } else if (w < c) {
+    soWhat =
+      `${competitorName} leads on ${featureName} in isolation, but a single feature score doesn't tell you whether your team will actually use it. What matters is how it fits into real workflows and whether it delivers value beyond the demo.`;
+    proveIt =
+      `WisdomAI is ${ourSemantic} on ${featureName} while ${competitorName} is ${theirSemantic}, but our customers choose us for total platform value. We focus on ${ourEdge}, which drives real adoption. We're happy to do a side-by-side in your environment so you can judge fit, not just the feature list.`;
+    whyYou =
+      `We position ${featureName} as part of how your team already works: ${ourEdge}. You're not buying a checkbox; you're buying something people will use every day. Compare total value and where we lead, not just this one feature.`;
     hook =
-      `What ${competitorName} will tell your prospect: “We’re ahead on ${featureName}—${theirAngle}.”`;
+      `What ${competitorName} will tell your prospect: "We're ahead on ${featureName} - ${theirAngle}."`;
     flaw =
-      `What you can say back: “They’re ${theirSemantic} on this one piece—we’re ${ourSemantic}. The piece they don’t talk about is reliability and whether anyone actually uses it. We’ve built ours so it gets used every day, not just in a demo.”`;
+      `What you can say back: "They're ${theirSemantic} on this one piece. We're ${ourSemantic}. The piece they don't talk about is reliability and whether anyone actually uses it. We've built ours so it gets used every day, not just in a demo."`;
     counter =
-      `Your line: “We position ${featureName} as part of how your team already works—${ourEdge}. So you’re not buying a checkbox; you’re buying something people will use. I’d compare total value and where we lead, not just this feature.”`;
+      `Your line: "We position ${featureName} as part of how your team already works: ${ourEdge}. So you're not buying a checkbox; you're buying something people will use. I'd compare total value and where we lead, not just this feature."`;
     landmine =
-      `Ask your prospect: “Beyond the demo, how often do your users actually rely on ${competitorName} for this, and how do you measure that?”`;
+      `Ask your prospect: "Beyond the demo, how often do your users actually rely on ${competitorName} for this, and how do you measure that?"`;
   } else {
+    soWhat =
+      `You're evaluating two platforms that score similarly on ${featureName}. The real question isn't "who has it" but "whose version will my team actually use?" That's where evaluations stall, and where the wrong choice costs you months.`;
+    proveIt =
+      `Both WisdomAI and ${competitorName} are ${ourSemantic} on ${featureName}. The difference shows up in ease of use, explainability, and workflow integration: ${ourEdge}. We're happy to walk through a real workflow or share a customer story so you can see the difference beyond the scorecard.`;
+    whyYou =
+      `We built ${featureName} so ${ourEdge}. It plugs into how your data team works instead of adding another silo. With WisdomAI, your team extends how they already work rather than learning another tool.`;
     hook =
-      `What ${competitorName} will tell your prospect: “We’re right there on ${featureName}—${theirAngle}.”`;
+      `What ${competitorName} will tell your prospect: "We're right there on ${featureName} - ${theirAngle}."`;
     flaw =
-      `What you can say back: “We’re both ${ourSemantic} here. What doesn’t show up is ease of use, explainability, and how it fits your workflows. That’s where we see customers choose us.”`;
+      `What you can say back: "We're both ${ourSemantic} here. What doesn't show up is ease of use, explainability, and how it fits your workflows. That's where we see customers choose us."`;
     counter =
-      `Your line: “We’re ${ourSemantic} on ${featureName}, but we’ve built it so ${ourEdge}. So it plugs into how your data team works instead of adding another tool that only looks good in a deck. Want to see it in your environment?”`;
+      `Your line: "We're ${ourSemantic} on ${featureName}, but we've built it so ${ourEdge}. So it plugs into how your data team works instead of adding another tool that only looks good in a deck. Want to see it in your environment?"`;
     landmine =
-      `Ask your prospect: “When you evaluate this, how will you test real workflows and handoffs—not just whether the demo looks good?”`;
+      `Ask your prospect: "When you evaluate this, how will you test real workflows and handoffs, not just whether the demo looks good?"`;
   }
 
   return {
-    responseShort,
-    responseMedium,
-    responseLong,
+    soWhat,
+    proveIt,
+    whyYou,
     hook: truncateSnippet(hook, 420),
     flaw: truncateSnippet(flaw, 420),
     counter: truncateSnippet(counter, 420),
@@ -314,9 +303,6 @@ function wisdomBaseScoreFromCriteria(f: Feature): number {
     (acc, value) => acc + (Number(value) || 0),
     0,
   );
-  // Each criterion is scored 0–5. A perfect 5 contributes 1 point to the
-  // overall feature score (max 5). This yields a 0–5 score with 2-decimal
-  // granularity.
   const total = (sum / 25) * 5;
   return Number.isFinite(total) ? total : 0;
 }
@@ -344,12 +330,10 @@ export function getWisdomScore(
   if (view === "ideal") return base;
 
   if (view === "real") {
-    // Real Comparison (GA view): only score GA features, Beta/Planned = 0
     return f.wisdom.readiness === "GA" ? base : 0;
   }
 
   if (view === "quarterly") {
-    // Target Release view: only score GA/Beta that are available by the selected quarter
     if (
       (f.wisdom.readiness === "GA" || f.wisdom.readiness === "Beta") &&
       isFeatureInQuarter(f, quarter)
@@ -448,7 +432,7 @@ export function tierClass(comp: string): "t1" | "t2" | "t3" {
 
 export function trunc(str: string | undefined, len: number): string {
   if (!str) return "";
-  return str.length > len ? str.substring(0, len) + "…" : str;
+  return str.length > len ? str.substring(0, len) + "\u2026" : str;
 }
 
 export function getVisibleCompetitors(
@@ -462,4 +446,3 @@ export function getVisibleCompetitors(
     return true;
   });
 }
-

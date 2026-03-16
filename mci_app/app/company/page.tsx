@@ -2,7 +2,7 @@
 
 import Box from "@mui/material/Box";
 import { ProductMarketingNav } from "../ProductMarketingNav";
-import { CompanyPageContent } from "./CompanyPageContent";
+import CompanyPageContent from "./CompanyPageContent";
 
 export default function CompanyPage() {
   return (
@@ -18,4 +18,3 @@ export default function CompanyPage() {
     </Box>
   );
 }
-
