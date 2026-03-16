@@ -24,6 +24,16 @@ interface QuadrantChartProps {
   height: string;
 }
 
+const qlPillBase: React.CSSProperties = {
+  fontSize: 9,
+  fontWeight: 600,
+  padding: '4px 9px',
+  borderRadius: 5,
+  border: '1px solid',
+  lineHeight: 1,
+  whiteSpace: 'nowrap',
+};
+
 export default function QuadrantChart({ config: cfg, title, subtitle, selectedCompetitors, height }: QuadrantChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<ChartJS | null>(null);
@@ -45,13 +55,6 @@ export default function QuadrantChart({ config: cfg, title, subtitle, selectedCo
     const gridColor = 'rgba(109,40,217,0.06)';
     const tickColor = '#8A839A';
 
-    const qlStyles = [
-      { bg: '#F4F2F8', text: '#5E566E', border: 'rgba(109,40,217,0.2)' },
-      { bg: 'rgba(23,135,85,0.08)', text: '#178755', border: 'rgba(23,135,85,0.25)' },
-      { bg: '#F4F2F8', text: '#5E566E', border: 'rgba(109,40,217,0.2)' },
-      { bg: 'rgba(176,122,24,0.08)', text: '#B07A18', border: 'rgba(176,122,24,0.25)' },
-    ];
-
     const quadrantPlugin: Plugin<'bubble'> = {
       id: 'quadrantOverlay',
       afterDraw(chart) {
@@ -69,50 +72,6 @@ export default function QuadrantChart({ config: cfg, title, subtitle, selectedCo
         ctx.beginPath(); ctx.moveTo(midX, top); ctx.lineTo(midX, bottom); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(left, midY); ctx.lineTo(right, midY); ctx.stroke();
         ctx.setLineDash([]);
-
-        const labels = cfg.quadrantLabels;
-        const pY = 5, pX = 9, r = 5, fs = 9;
-        const pillH = fs + pY * 2;
-
-        const positions = [
-          { bxFn: () => left, by: top - pillH - 4 },
-          { bxFn: (pw: number) => right - pw, by: top - pillH - 4 },
-          { bxFn: () => left, by: bottom + 4 },
-          { bxFn: (pw: number) => right - pw, by: bottom + 4 },
-        ];
-
-        ctx.font = `500 ${fs}px 'Inter', sans-serif`;
-        labels.forEach((text, i) => {
-          const pos = positions[i];
-          const st = qlStyles[i];
-          const tw = ctx.measureText(text).width;
-          const pillW = tw + pX * 2;
-          const bx = Math.max(left, Math.min(pos.bxFn(pillW), right - pillW));
-          const by = pos.by;
-
-          ctx.beginPath();
-          ctx.moveTo(bx + r, by);
-          ctx.lineTo(bx + pillW - r, by);
-          ctx.quadraticCurveTo(bx + pillW, by, bx + pillW, by + r);
-          ctx.lineTo(bx + pillW, by + pillH - r);
-          ctx.quadraticCurveTo(bx + pillW, by + pillH, bx + pillW - r, by + pillH);
-          ctx.lineTo(bx + r, by + pillH);
-          ctx.quadraticCurveTo(bx, by + pillH, bx, by + pillH - r);
-          ctx.lineTo(bx, by + r);
-          ctx.quadraticCurveTo(bx, by, bx + r, by);
-          ctx.closePath();
-          ctx.fillStyle = st.bg;
-          ctx.fill();
-          ctx.strokeStyle = st.border;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          ctx.fillStyle = st.text;
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.font = `600 ${fs}px 'Inter', sans-serif`;
-          ctx.fillText(text, bx + pX, by + pillH / 2);
-        });
 
         ctx.font = '600 9.5px "Inter", sans-serif';
         ctx.textBaseline = 'alphabetic';
@@ -145,7 +104,7 @@ export default function QuadrantChart({ config: cfg, title, subtitle, selectedCo
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 28, right: 12, bottom: 28, left: 12 } },
+        layout: { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
         scales: {
           x: {
             min: 0, max: 100,
@@ -185,14 +144,31 @@ export default function QuadrantChart({ config: cfg, title, subtitle, selectedCo
         chartRef.current = null;
       }
     };
-  }, [cfg, selectedCompetitors]);
+  }, [cfg, selectedCompetitors, height]);
+
+  const qlStyles: React.CSSProperties[] = [
+    { background: '#F4F2F8', color: '#5E566E', borderColor: 'rgba(109,40,217,0.2)' },
+    { background: 'rgba(23,135,85,0.08)', color: '#178755', borderColor: 'rgba(23,135,85,0.25)' },
+    { background: '#F4F2F8', color: '#5E566E', borderColor: 'rgba(109,40,217,0.2)' },
+    { background: 'rgba(176,122,24,0.08)', color: '#B07A18', borderColor: 'rgba(176,122,24,0.25)' },
+  ];
 
   return (
     <div className="chart-card">
       <div className="chart-title">{title}</div>
       <div className="chart-subtitle">{subtitle}</div>
-      <div className="chart-wrap" style={{ height }}>
-        <canvas ref={canvasRef}></canvas>
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <span style={{ ...qlPillBase, ...qlStyles[0] }}>{cfg.quadrantLabels[0]}</span>
+          <span style={{ ...qlPillBase, ...qlStyles[1] }}>{cfg.quadrantLabels[1]}</span>
+        </div>
+        <div className="chart-wrap" style={{ height }}>
+          <canvas ref={canvasRef}></canvas>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+          <span style={{ ...qlPillBase, ...qlStyles[2] }}>{cfg.quadrantLabels[2]}</span>
+          <span style={{ ...qlPillBase, ...qlStyles[3] }}>{cfg.quadrantLabels[3]}</span>
+        </div>
       </div>
     </div>
   );
