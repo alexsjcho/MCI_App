@@ -125,5 +125,17 @@ describe("Use Cases comparison page", () => {
 
     expect(nav).toHaveStyle("height: 100vh");
   });
+
+  it("shows Wins, Ties, and Trails counts inside the Show filters instead of separate metric cards", () => {
+    render(<UseCasesPage />);
+
+    const winsButton = screen.getByRole("button", { name: /wins/i });
+    const tiesButton = screen.getByRole("button", { name: /ties/i });
+    const trailsButton = screen.getByRole("button", { name: /trails/i });
+
+    expect(winsButton.textContent).toMatch(/wins\s*\(\d+\)/i);
+    expect(tiesButton.textContent).toMatch(/ties\s*\(\d+\)/i);
+    expect(trailsButton.textContent).toMatch(/trails\s*\(\d+\)/i);
+  });
 });
 

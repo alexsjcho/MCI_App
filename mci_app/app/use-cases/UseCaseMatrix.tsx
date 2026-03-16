@@ -1059,88 +1059,6 @@ export default function UseCaseMatrix() {
             any row to expand details
           </p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {[
-            {
-              val: "win" as const,
-              count: winsCount,
-              color: "#16a34a",
-              bg: "#dcfce7",
-              activeBorder: "#16a34a",
-              label: "Wins",
-            },
-            {
-              val: "tie" as const,
-              count: tiesCount,
-              color: "#64748b",
-              bg: "#f1f5f9",
-              activeBorder: "#94a3b8",
-              label: "Ties",
-              labelColor: "#94a3b8",
-            },
-            {
-              val: "trail" as const,
-              count: trailsCount,
-              color: "#dc2626",
-              bg: "#fee2e2",
-              activeBorder: "#dc2626",
-              label: "Trails",
-            },
-          ].map((card) => {
-            const isActive = filterResult === card.val;
-            return (
-              <div
-                key={card.val}
-                onClick={() =>
-                  setFilterResult(isActive ? null : card.val)
-                }
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setFilterResult(isActive ? null : card.val);
-                  }
-                }}
-                style={{
-                  textAlign: "center",
-                  padding: "6px 14px",
-                  background: card.bg,
-                  borderRadius: 8,
-                  minWidth: 50,
-                  cursor: "pointer",
-                  border: isActive
-                    ? `2px solid ${card.activeBorder}`
-                    : "2px solid transparent",
-                  boxShadow: isActive
-                    ? `0 0 0 2px ${card.activeBorder}33`
-                    : "none",
-                  transition: "all .15s",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: card.color,
-                  }}
-                >
-                  {card.count}
-                </div>
-                <div
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: card.labelColor || card.color,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {card.label}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       <div
@@ -1380,6 +1298,7 @@ export default function UseCaseMatrix() {
             {
               val: "win" as const,
               label: "Wins",
+              count: winsCount,
               activeColor: "#16a34a",
               activeBg: "#dcfce7",
               activeBorder: "#16a34a",
@@ -1387,6 +1306,7 @@ export default function UseCaseMatrix() {
             {
               val: "tie" as const,
               label: "Ties",
+              count: tiesCount,
               activeColor: "#64748b",
               activeBg: "#f1f5f9",
               activeBorder: "#94a3b8",
@@ -1394,6 +1314,7 @@ export default function UseCaseMatrix() {
             {
               val: "trail" as const,
               label: "Trails",
+              count: trailsCount,
               activeColor: "#dc2626",
               activeBg: "#fee2e2",
               activeBorder: "#dc2626",
@@ -1419,7 +1340,7 @@ export default function UseCaseMatrix() {
                   fontWeight: isActive ? 600 : 400,
                 }}
               >
-                {s.label}
+                {`${s.label} (${s.count})`}
               </button>
             );
           })}
