@@ -212,8 +212,8 @@ export default function FeatureComparisonPage() {
             currentView === "real" || currentView === "quarterly"
               ? cat.features.length
               : cat.features.filter((f) =>
-                  isIncluded(f, currentView, currentQuarter),
-                ).length;
+                isIncluded(f, currentView, currentQuarter),
+              ).length;
           const maxCat = includedCount * 5;
           const pctCat = maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
 
@@ -360,7 +360,7 @@ export default function FeatureComparisonPage() {
             className="header-title"
             sx={{ fontSize: "1.75rem", fontWeight: 700 }}
           >
-            Feature Comparison Matrix
+            Feature Comparison
           </Typography>
         </Paper>
 
@@ -838,9 +838,8 @@ export default function FeatureComparisonPage() {
                           applyTierSelection(tier);
                         }
                       }}
-                      className={`tier-filter-btn ${tierFilterTier(tier)} ${
-                        activeTierFilter === tier ? "active" : ""
-                      }`}
+                      className={`tier-filter-btn ${tierFilterTier(tier)} ${activeTierFilter === tier ? "active" : ""
+                        }`}
                       sx={{
                         textTransform: "none",
                         fontSize: "0.6875rem",
@@ -1223,8 +1222,8 @@ export default function FeatureComparisonPage() {
                     currentView === "real" || currentView === "quarterly"
                       ? cat.features.length
                       : cat.features.filter((f) =>
-                          isIncluded(f, currentView, currentQuarter),
-                        ).length;
+                        isIncluded(f, currentView, currentQuarter),
+                      ).length;
                   const maxCat = incCount * 5;
                   const pctCat =
                     maxCat > 0 ? Math.round((wCat / maxCat) * 100) : 0;
@@ -1712,11 +1711,11 @@ export default function FeatureComparisonPage() {
                   const rawDetail =
                     isCompetitor && competitorName
                       ? getCompetitorCriterionDetail(
-                          category.name,
-                          feature.name,
-                          competitorName,
-                          meta.key,
-                        )
+                        category.name,
+                        feature.name,
+                        competitorName,
+                        meta.key,
+                      )
                       : getCriterionDetail(category.name, feature.name, meta.key);
                   const scoreVal = criteria[meta.key] ?? 0;
                   const companyName =

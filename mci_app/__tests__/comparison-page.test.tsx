@@ -634,7 +634,7 @@ describe("Competitor comparison page", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders a left navigation menu for Product Marketing with Features and Use Cases entries and icons", () => {
+  it("renders a left navigation menu for Product Marketing with Company, Features, and Use Cases entries and icons", () => {
     render(<Home />);
 
     const nav = screen.getByRole("navigation", {
@@ -645,6 +645,9 @@ describe("Competitor comparison page", () => {
       within(nav).getByText(/product marketing/i),
     ).toBeInTheDocument();
 
+    const companyButton = within(nav).getByRole("button", {
+      name: /company/i,
+    });
     const featuresButton = within(nav).getByRole("button", {
       name: /features/i,
     });
@@ -653,11 +656,20 @@ describe("Competitor comparison page", () => {
     });
 
     expect(
+      within(companyButton).getByTestId("company-icon"),
+    ).toBeInTheDocument();
+    expect(
       within(featuresButton).getByTestId("features-icon"),
     ).toBeInTheDocument();
     expect(
       within(useCasesButton).getByTestId("use-cases-icon"),
     ).toBeInTheDocument();
+
+    // Company should appear above Features in the navigation
+    const companyBeforeFeatures =
+      companyButton.compareDocumentPosition(featuresButton) &
+      Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(companyBeforeFeatures).toBeTruthy();
   });
 
   it("renders a toggle icon to collapse the left navigation", () => {

@@ -7,6 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import SvgIcon from "@mui/material/SvgIcon";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import NextLink from "next/link";
 
@@ -53,7 +54,7 @@ function NavExpandIcon(props: React.ComponentProps<typeof SvgIcon>) {
 }
 
 type ProductMarketingNavProps = {
-  active: "features" | "use-cases";
+  active: "company" | "features" | "use-cases";
 };
 
 export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
@@ -117,6 +118,50 @@ export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
             Product Marketing
           </Typography>
         )}
+
+        <Button
+          variant="text"
+          fullWidth
+          component={NextLink}
+          href="/company"
+          sx={{
+            justifyContent: isNavCollapsed ? "center" : "flex-start",
+            minWidth: 0,
+            px: isNavCollapsed ? 0 : 2,
+            width: isNavCollapsed ? COLLAPSED_PILL_SIZE : EXPANDED_PILL_WIDTH,
+            height: isNavCollapsed ? COLLAPSED_PILL_SIZE : "auto",
+            alignSelf: "center",
+            textTransform: "none",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            borderRadius: 999,
+            bgcolor:
+              active === "company" ? "primary.main" : "rgba(124,58,237,0.04)",
+            color: active === "company" ? "#fff" : "primary.main",
+            "&:hover": {
+              bgcolor:
+                active === "company"
+                  ? "primary.main"
+                  : "rgba(124,58,237,0.08)",
+            },
+          }}
+        >
+          {isNavCollapsed ? (
+            <ApartmentIcon
+              fontSize="small"
+              data-testid="company-icon"
+            />
+          ) : (
+            <>
+              <ApartmentIcon
+                fontSize="small"
+                data-testid="company-icon"
+                style={{ marginRight: 8 }}
+              />
+              Company
+            </>
+          )}
+        </Button>
 
         <Button
           variant="text"
