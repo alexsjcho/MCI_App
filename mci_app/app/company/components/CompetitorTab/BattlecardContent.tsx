@@ -6,13 +6,14 @@ import Badge from '../ui/Badge';
 import CompanyProfile from './CompanyProfile';
 import Positioning from './Positioning';
 import WinLoss from './WinLoss';
+import Battlecard from './Battlecard';
 
 interface BattlecardContentProps {
   competitor: Competitor;
   isWisdom: boolean;
 }
 
-type BcTab = 'profile' | 'positioning' | 'compete';
+type BcTab = 'profile' | 'positioning' | 'compete' | 'battlecard';
 
 export default function BattlecardContent({ competitor: c, isWisdom }: BattlecardContentProps) {
   const [activeTab, setActiveTab] = useState<BcTab>('profile');
@@ -52,11 +53,13 @@ export default function BattlecardContent({ competitor: c, isWisdom }: Battlecar
         <button className={`tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Company Profile</button>
         <button className={`tab ${activeTab === 'positioning' ? 'active' : ''}`} onClick={() => setActiveTab('positioning')}>Positioning</button>
         <button className={`tab ${activeTab === 'compete' ? 'active' : ''}`} onClick={() => setActiveTab('compete')}>Win/Loss</button>
+        <button className={`tab ${activeTab === 'battlecard' ? 'active' : ''}`} onClick={() => setActiveTab('battlecard')}>Battlecard</button>
       </div>
 
       {activeTab === 'profile' && <CompanyProfile competitor={c} />}
       {activeTab === 'positioning' && <Positioning competitor={c} isWisdom={isWisdom} />}
       {activeTab === 'compete' && <WinLoss competitor={c} isWisdom={isWisdom} />}
+      {activeTab === 'battlecard' && <Battlecard competitor={c} isWisdom={isWisdom} />}
     </div>
   );
 }
