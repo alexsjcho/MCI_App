@@ -9,6 +9,7 @@ import SvgIcon from "@mui/material/SvgIcon";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 import NextLink from "next/link";
 
 const EXPANDED_NAV_WIDTH = 220;
@@ -54,7 +55,7 @@ function NavExpandIcon(props: React.ComponentProps<typeof SvgIcon>) {
 }
 
 type ProductMarketingNavProps = {
-  active: "company" | "features" | "use-cases";
+  active: "qualify" | "company" | "features" | "use-cases";
 };
 
 export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
@@ -118,6 +119,50 @@ export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
             Product Marketing
           </Typography>
         )}
+
+        <Button
+          variant="text"
+          fullWidth
+          component={NextLink}
+          href="/qualify"
+          sx={{
+            justifyContent: isNavCollapsed ? "center" : "flex-start",
+            minWidth: 0,
+            px: isNavCollapsed ? 0 : 2,
+            width: isNavCollapsed ? COLLAPSED_PILL_SIZE : EXPANDED_PILL_WIDTH,
+            height: isNavCollapsed ? COLLAPSED_PILL_SIZE : "auto",
+            alignSelf: "center",
+            textTransform: "none",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            borderRadius: 999,
+            bgcolor:
+              active === "qualify" ? "primary.main" : "rgba(124,58,237,0.04)",
+            color: active === "qualify" ? "#fff" : "primary.main",
+            "&:hover": {
+              bgcolor:
+                active === "qualify"
+                  ? "primary.main"
+                  : "rgba(124,58,237,0.08)",
+            },
+          }}
+        >
+          {isNavCollapsed ? (
+            <HowToRegIcon
+              fontSize="small"
+              data-testid="qualify-icon"
+            />
+          ) : (
+            <>
+              <HowToRegIcon
+                fontSize="small"
+                data-testid="qualify-icon"
+                style={{ marginRight: 8 }}
+              />
+              Qualify
+            </>
+          )}
+        </Button>
 
         <Button
           variant="text"

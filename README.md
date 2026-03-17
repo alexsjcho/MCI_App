@@ -28,7 +28,13 @@ The primary app is a Next.js app in the `mci_app` directory.
 
 ## Competitor Comparison Matrix — Business Logic
 
-The Competitor Comparison Matrix visualizes feature-level parity between WisdomAI and a fixed set of competitors and powers a set of interactive views, filters, and explanations for sales and product teams.
+This page is the **Feature Comparison** experience (feature-level parity between WisdomAI and competitors).
+
+- **Routes**
+  - **`/`**: currently routes to the Feature Comparison page (re-export of `app/features/FeatureComparisonPage.tsx`).
+  - **`/features`**: explicit route to the same Feature Comparison page.
+
+The matrix powers interactive views, filters, and explanations for sales and product teams.
 
 ### Views & inclusion logic
 
@@ -125,6 +131,16 @@ Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function b
   - For each visible competitor: score and tier.
 - The filename includes the active view and, for Target Release, the selected quarter (e.g. `wisdomai-comparison-quarterly-Q4.csv`).
 
+### Data and configuration sources
+
+- **Feature/competitor dataset**: `mci_app/app/features/comparison-data.ts`
+  - Categories, features, WisdomAI readiness/expected dates, and competitor score + description per feature.
+- **Scoring and view logic helpers**: `mci_app/app/features/helpers.ts`
+  - View modes (`ideal`, `real`, `quarterly`), inclusion rules, totals, criteria model, and messaging helpers.
+- **View copy**: `mci_app/app/features/viewConfig.ts` (tab tooltips, with quarter interpolation)
+- **Shared UI utilities**: `mci_app/app/features/utils.ts`
+  - Readiness label formatting, percentage color bands, score formatting, and auto-generated criterion explanations (when no researched rationale exists).
+
 ## Use Case Matrix — Business Logic
 
 The Use Case Matrix is a separate page (`/use-cases`) that maps real-world customer scenarios to personas, industries, challenges, outcomes, and competitor positioning. It is driven entirely from structured data in `use-case-data.ts`.
@@ -185,4 +201,55 @@ Each entry in `USE_CASES` represents one concrete scenario, with:
 - This allows:
   - Sales to start with a customer outcome (“Get weekly AI-generated KPI summaries”) and see how WisdomAI vs. competitors stack up for that scenario.
   - Product marketing to maintain a single place (`use-case-data.ts`) for persona x industry x challenge narratives, expected outcomes, and competitive notes.
+
+## Qualify Page — Business Logic
+
+The **Qualify** page (`/qualify`) is a product marketing / sales enablement tool that generates **tailored qualification guidance** based on:
+
+- **Product** (what we’re selling)
+- **Industry** (prospect context)
+- **Framework** (how we qualify)
+
+It is designed to make reps faster and more consistent by producing ready-to-use discovery guidance and a worked example that matches the chosen context.
+
+### Page behavior
+
+- The page renders within the shared `ProductMarketingNav` layout with **Qualify** marked as the active entry.
+- The header describes the core workflow: select **Product**, **Industry**, and **Framework** to get tailored outputs.
+- Three dropdown filters drive the entire page:
+  - **Product**: maps to a `ProductId` (options come from `productList`).
+  - **Industry**: maps to an `IndustryId` (options come from `industryList`).
+  - **Framework**: maps to a `FrameworkId` (`spin` or `meddpicc`).
+- Content is split into two tabs:
+  - **Strategy**: qualification criteria with how-to guidance, discovery questions, and red flags.
+  - **Example**: a worked “qualified opportunity” narrative showing what good looks like.
+
+### Framework logic (SPIN vs MEDDPICC)
+
+- Framework selection drives which content generator is used:
+  - **SPIN** (`spin`): Situation, Problem, Implication, Need‑Payoff.
+  - **MEDDPICC** (`meddpicc`): Metrics, Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion, Competition.
+- For both frameworks:
+  - Criteria have stable IDs and definitions, and the per‑product/per‑industry layer adds the practical guidance:
+    - `howToQualify`
+    - `discoveryQuestions[]`
+    - `redFlags[]`
+  - The **Example** tab returns a structured narrative with stakeholder map and per‑criterion findings with a status (`strong`, `moderate`, `weak`).
+
+### Data and configuration sources
+
+- **Route**: `mci_app/app/qualify/page.tsx`
+- **Page orchestration (filters + tabs)**: `mci_app/app/qualify/QualificationPage.tsx`
+- **Framework selection helpers**: `mci_app/app/qualify/data/index.ts`
+  - `getFrameworkCriteria(frameworkId, productId, industryId)`
+  - `getFrameworkExample(frameworkId, productId, industryId)`
+  - `frameworkOptions` (SPIN + MEDDPICC)
+- **Types**: `mci_app/app/qualify/data/types.ts`
+  - `FrameworkCriterion`, `QualifiedOpportunityExample`, `FrameworkId`
+- **Framework content**:
+  - `mci_app/app/qualify/data/spin-framework.ts`
+  - `mci_app/app/qualify/data/meddpicc-framework.ts`
+- **Product and industry catalogs**:
+  - `mci_app/app/qualify/data/products.ts`
+  - `mci_app/app/qualify/data/industries.ts`
 
