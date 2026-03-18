@@ -17,7 +17,9 @@ The primary app is a Next.js app in the `mci_app` directory.
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+![MCI App overview](./mci_app/assets/readme_img/mcp-app.png)
 
 3. **Other commands**
 
@@ -35,6 +37,8 @@ This page is the **Feature Comparison** experience (feature-level parity between
   - **`/features`**: explicit route to the same Feature Comparison page.
 
 The matrix powers interactive views, filters, and explanations for sales and product teams.
+
+![Features comparison](./mci_app/assets/readme_img/features.png)
 
 ### Views & inclusion logic
 
@@ -145,6 +149,8 @@ Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function b
 
 The Use Case Matrix is a separate page (`/use-cases`) that maps real-world customer scenarios to personas, industries, challenges, outcomes, and competitor positioning. It is driven entirely from structured data in `use-case-data.ts`.
 
+![Use case matrix](./mci_app/assets/readme_img/usecase.png)
+
 ### Core concepts
 
 - **Personas** (`PERSONAS`):
@@ -212,6 +218,8 @@ The **Qualify** page (`/qualify`) is a product marketing / sales enablement tool
 
 It is designed to make reps faster and more consistent by producing ready-to-use discovery guidance and a worked example that matches the chosen context.
 
+![Qualification guide](./mci_app/assets/readme_img/qualification.png)
+
 ### Page behavior
 
 - The page renders within the shared `ProductMarketingNav` layout with **Qualify** marked as the active entry.
@@ -258,6 +266,8 @@ It is designed to make reps faster and more consistent by producing ready-to-use
 ## Company Page — Business Logic
 
 The **Company** page (`/company`) is a battlecard and positioning experience built for product marketing and sales.
+
+![Competitor battlecard](./mci_app/assets/readme_img/competitor.png)
 
 ### Navigation and header
 
@@ -310,6 +320,8 @@ The **Company** page (`/company`) is a battlecard and positioning experience bui
 ## Pricing Page — Business Logic
 
 The **Pricing** page (`/pricing`) provides a sales-ready market view of how WisdomAI compares on pricing transparency, capability coverage, and 3-year TCO.
+
+![Pricing comparison](./mci_app/assets/readme_img/pricing.png)
 
 ### Navigation and tabs
 
