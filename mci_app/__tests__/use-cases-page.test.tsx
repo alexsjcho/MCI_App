@@ -71,12 +71,18 @@ describe("Use Cases comparison page", () => {
     const useCasesButton = within(nav).getByRole("link", {
       name: /use cases/i,
     });
+    const pricingButton = within(nav).getByRole("link", {
+      name: /pricing/i,
+    });
 
     expect(
       within(featuresButton).getByTestId("features-icon"),
     ).toBeInTheDocument();
     expect(
       within(useCasesButton).getByTestId("use-cases-icon"),
+    ).toBeInTheDocument();
+    expect(
+      within(pricingButton).getByTestId("pricing-icon"),
     ).toBeInTheDocument();
   });
 
@@ -104,6 +110,9 @@ describe("Use Cases comparison page", () => {
     expect(
       within(nav).getByTestId("use-cases-icon"),
     ).toBeInTheDocument();
+    expect(
+      within(nav).getByTestId("pricing-icon"),
+    ).toBeInTheDocument();
 
     // Toggle label should change to "Expand navigation"
     const expandButton = screen.getByRole("button", {
@@ -114,6 +123,9 @@ describe("Use Cases comparison page", () => {
     // Content should be visible again after expanding
     expect(within(nav).getByText(/product marketing/i)).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: /features/i })).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("link", { name: /pricing/i }),
+    ).toBeInTheDocument();
   });
 
   it("styles the left navigation to span the full viewport height", () => {

@@ -10,6 +10,7 @@ import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import NextLink from "next/link";
 
 const EXPANDED_NAV_WIDTH = 220;
@@ -55,7 +56,7 @@ function NavExpandIcon(props: React.ComponentProps<typeof SvgIcon>) {
 }
 
 type ProductMarketingNavProps = {
-  active: "qualify" | "company" | "features" | "use-cases";
+  active: "qualify" | "company" | "pricing" | "features" | "use-cases";
 };
 
 export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
@@ -301,6 +302,50 @@ export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
                 style={{ marginRight: 8 }}
               />
               Use Cases
+            </>
+          )}
+        </Button>
+
+        <Button
+          variant="text"
+          fullWidth
+          component={NextLink}
+          href="/pricing"
+          sx={{
+            justifyContent: isNavCollapsed ? "center" : "flex-start",
+            minWidth: 0,
+            px: isNavCollapsed ? 0 : 2,
+            width: isNavCollapsed ? COLLAPSED_PILL_SIZE : EXPANDED_PILL_WIDTH,
+            height: isNavCollapsed ? COLLAPSED_PILL_SIZE : "auto",
+            alignSelf: "center",
+            textTransform: "none",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            borderRadius: 999,
+            bgcolor:
+              active === "pricing" ? "primary.main" : "rgba(124,58,237,0.04)",
+            color: active === "pricing" ? "#fff" : "primary.main",
+            "&:hover": {
+              bgcolor:
+                active === "pricing"
+                  ? "primary.main"
+                  : "rgba(124,58,237,0.08)",
+            },
+          }}
+        >
+          {isNavCollapsed ? (
+            <AttachMoneyIcon
+              fontSize="small"
+              data-testid="pricing-icon"
+            />
+          ) : (
+            <>
+              <AttachMoneyIcon
+                fontSize="small"
+                data-testid="pricing-icon"
+                style={{ marginRight: 8 }}
+              />
+              Pricing
             </>
           )}
         </Button>

@@ -17,7 +17,8 @@ export default function ExampleTab({
   productName,
   industryName,
 }: ExampleTabProps) {
-  const frameworkLabel = frameworkId === "spin" ? "SPIN" : "MEDDPICC";
+  const frameworkLabel =
+    frameworkId === "spin" ? "SPIN" : frameworkId === "meddpicc" ? "MEDDPICC" : "METTRIC";
 
   return (
     <div>

@@ -17,7 +17,12 @@ export default function StrategyTab({
   productName,
   industryName,
 }: StrategyTabProps) {
-  const frameworkLabel = frameworkId === "spin" ? "SPIN Selling" : "MEDDPICC";
+  const frameworkLabel =
+    frameworkId === "spin"
+      ? "SPIN Selling"
+      : frameworkId === "meddpicc"
+        ? "MEDDPICC"
+        : "METTRIC";
 
   return (
     <div>
@@ -27,7 +32,9 @@ export default function StrategyTab({
         <p className="strategy-desc">
           {frameworkId === "spin"
             ? "Use the SPIN framework to systematically uncover the prospect's situation, identify problems, explore implications, and establish need-payoff. Each criterion below includes tailored discovery questions and red flags specific to this product and industry."
-            : "Use MEDDPICC to rigorously qualify every aspect of the deal. Each criterion below provides guidance on how to qualify, discovery questions tailored to this product and industry, and red flags that signal a deal at risk."}
+            : frameworkId === "meddpicc"
+              ? "Use MEDDPICC to rigorously qualify every aspect of the deal. Each criterion below provides guidance on how to qualify, discovery questions tailored to this product and industry, and red flags that signal a deal at risk."
+              : "Use METTRIC to qualify opportunity health around measurable outcomes, proof that solutions are feasible, delivery timeline reality, and the commercial path to commitment. Each criterion below includes guidance and tailored discovery questions specific to this product and industry."}
         </p>
       </div>
 

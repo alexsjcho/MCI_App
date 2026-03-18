@@ -1,7 +1,7 @@
 import type { ProductId } from "./products";
 import type { IndustryId } from "./industries";
 
-export type FrameworkId = "spin" | "meddpicc";
+export type FrameworkId = "spin" | "meddpicc" | "mettric";
 
 export interface FrameworkCriterion {
   id: string;
