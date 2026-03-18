@@ -28,7 +28,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - **Run tests:** `npm test`
    - **Lint:** `npm run lint`
 
-## Competitor Comparison Matrix — Business Logic
+## Feature Comparison — Business Logic
 
 This page is the **Feature Comparison** experience (feature-level parity between WisdomAI and competitors).
 
@@ -69,7 +69,7 @@ The matrix powers interactive views, filters, and explanations for sales and pro
   - **Reliability & Performance**
   - **Unique Value Proposition (Differentiator)**
 - For now, each criterion reuses the same base `wisdom.score` so totals stay consistent; the criteria exist to support richer explanations and future weighting.
-- A **Feature score breakdown** modal is available from the magnifying-glass icon in WisdomAI cells:
+- A **Feature score breakdown** modal is available from the info icon in score cells (WisdomAI and competitor cells):
   - Shows all five criteria, their descriptions, and any stored rationale (explanations, examples, and links) for that feature and criterion.
 
 ### Category, competitor, and overall totals
@@ -145,9 +145,9 @@ Category percentage badges (e.g. `15 / 20 · 75%`) use a banded color function b
 - **Shared UI utilities**: `mci_app/app/features/utils.ts`
   - Readiness label formatting, percentage color bands, score formatting, and auto-generated criterion explanations (when no researched rationale exists).
 
-## Use Case Matrix — Business Logic
+## Use Case Comparison — Business Logic
 
-The Use Case Matrix is a separate page (`/use-cases`) that maps real-world customer scenarios to personas, industries, challenges, outcomes, and competitor positioning. It is driven entirely from structured data in `use-case-data.ts`.
+The Use Case Comparison page (`/use-cases`) maps real-world customer scenarios to personas, industries, challenges, outcomes, and competitor positioning. It is driven entirely from structured data in `use-case-data.ts`.
 
 ![Use case matrix](./mci_app/assets/readme_img/usecase.png)
 
@@ -199,18 +199,18 @@ Each entry in `USE_CASES` represents one concrete scenario, with:
   - A row per use case that can be **expanded/collapsed**:
     - The collapsed row shows the title and key context.
     - Expanding a row reveals the **Expected Outcome** narrative and supporting details.
-- A small “Show” control row introduces future filtering by **Wins / Ties / Trails** against competitors; in the current implementation, it is purely presentational (no filtering logic yet).
+- A “Show” control row filters use cases by **Wins / Ties / Trails** relative to the currently selected competitors.
 
 ### How this relates to the comparison matrix
 
-- The Use Case Matrix reuses the same competitors and 0–5 scoring model as the Competitor Comparison Matrix but is organized around **business stories** instead of features.
+- The Use Case Comparison reuses the same competitors and 0–5 scoring model as the Feature Comparison but is organized around **business stories** instead of features.
 - This allows:
   - Sales to start with a customer outcome (“Get weekly AI-generated KPI summaries”) and see how WisdomAI vs. competitors stack up for that scenario.
   - Product marketing to maintain a single place (`use-case-data.ts`) for persona x industry x challenge narratives, expected outcomes, and competitive notes.
 
-## Qualify Page — Business Logic
+## Qualification Guide — Business Logic
 
-The **Qualify** page (`/qualify`) is a product marketing / sales enablement tool that generates **tailored qualification guidance** based on:
+The **Qualification Guide** page (`/qualify`) is a product marketing / sales enablement tool that generates **tailored qualification guidance** based on:
 
 - **Product** (what we’re selling)
 - **Industry** (prospect context)
@@ -238,7 +238,7 @@ It is designed to make reps faster and more consistent by producing ready-to-use
   - **SPIN** (`spin`): Situation, Problem, Implication, Need‑Payoff.
   - **MEDDPICC** (`meddpicc`): Metrics, Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion, Competition.
 - **METTRIC** (`mettric`): Measure Outcomes, Identify Challenges & Rewards, Test Feasibility, Timeline, ROI vs Cost, Executive Buy-In, Commitment to Change.
-- For both frameworks:
+- For all frameworks:
   - Criteria have stable IDs and definitions, and the per‑product/per‑industry layer adds the practical guidance:
     - `howToQualify`
     - `discoveryQuestions[]`
@@ -280,7 +280,7 @@ The **Company** page (`/company`) is a battlecard and positioning experience bui
 
 - The page body is split into three tabs:
   - **Overview**: pick which competitors to include and click a row to open their detailed battlecard.
-  - **Competitor**: show the selected competitor’s battlecard (or WisdomAI by default) with sub-tabs.
+  - **Competitor**: show the selected competitor’s battlecard (or WisdomAI by default) with sub-tabs; for some competitors the battlecard content may be marked as “Coming Soon”.
   - **Quadrant Maps**: visualize positioning across six quadrant charts and filter which competitors appear.
 
 ### Overview tab logic
