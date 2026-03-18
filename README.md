@@ -253,3 +253,55 @@ It is designed to make reps faster and more consistent by producing ready-to-use
   - `mci_app/app/qualify/data/products.ts`
   - `mci_app/app/qualify/data/industries.ts`
 
+## Company Page — Business Logic
+
+The **Company** page (`/company`) is a battlecard and positioning experience built for product marketing and sales.
+
+### Navigation and header
+
+- It renders inside the shared `ProductMarketingNav` layout with **Company** marked as the active entry.
+- The page header presents:
+  - Title: `Competitor Comparison`
+  - Subtitle: `WisdomAI vs 8 competitors`
+
+### Tabs
+
+- The page body is split into three tabs:
+  - **Overview**: pick which competitors to include and click a row to open their detailed battlecard.
+  - **Competitor**: show the selected competitor’s battlecard (or WisdomAI by default) with sub-tabs.
+  - **Quadrant Maps**: visualize positioning across six quadrant charts and filter which competitors appear.
+
+### Overview tab logic
+
+- **WisdomAI is always shown** in the table; competitors are controlled by a selectable set.
+- A tier filter UI (T1 / T2 / T3) lets users quickly include only a threat tier.
+- There are also **Select all** and **Deselect all** controls.
+- Clicking any competitor row switches the page to the **Competitor** tab and sets the selected competitor id.
+
+### Competitor tab + battlecard logic
+
+- The tab defaults to **WisdomAI**; a competitor dropdown lets you select a target competitor.
+- The battlecard content is organized into sub-tabs:
+  - `Company Profile`
+  - `Positioning`
+  - `Win/Loss`
+  - `Battlecard`
+- For non-WisdomAI competitors, the UI displays a tier/threat badge based on the competitor’s `threatLevel` / `threatLabel`.
+
+### Quadrant Maps logic
+
+- Users can toggle chart layout (e.g. `grid` vs `stack`).
+- A competitor selector (via the quadrant filter UI) determines which competitor points appear across all quadrant charts.
+- The six charts (Q1–Q6) are rendered from:
+  - static chart titles/subtitles
+  - point coordinates and quadrant labels from the `quadrantConfigs` configuration
+
+### Data and configuration sources
+
+- **Competitors**: `mci_app/app/company/data/competitors.ts` (includes tier/threat metadata, profile, strengths/weaknesses, etc.)
+- **WisdomAI**: `mci_app/app/company/data/wisdomai.ts`
+- **Overview table columns**: `mci_app/app/company/data/tableColumns.ts`
+- **Quadrant chart config**: `mci_app/app/company/data/quadrantConfigs.ts`
+- **Battlecard content**: `mci_app/app/company/data/battlecardData.ts`
+- **Objection/response copy**: `mci_app/app/company/data/objectionResponses.ts`
+

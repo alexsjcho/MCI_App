@@ -634,7 +634,7 @@ describe("Competitor comparison page", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders a left navigation menu for Product Marketing with Company, Features, and Use Cases entries and icons", () => {
+  it("renders a left navigation menu for Product Marketing with Competitor, Features, and Use Cases entries and icons", () => {
     render(<Home />);
 
     const nav = screen.getByRole("navigation", {
@@ -645,8 +645,8 @@ describe("Competitor comparison page", () => {
       within(nav).getByText(/product marketing/i),
     ).toBeInTheDocument();
 
-    const companyButton = within(nav).getByRole("button", {
-      name: /company/i,
+    const competitorButton = within(nav).getByRole("button", {
+      name: /competitor/i,
     });
     const featuresButton = within(nav).getByRole("button", {
       name: /features/i,
@@ -656,7 +656,7 @@ describe("Competitor comparison page", () => {
     });
 
     expect(
-      within(companyButton).getByTestId("company-icon"),
+      within(competitorButton).getByTestId("company-icon"),
     ).toBeInTheDocument();
     expect(
       within(featuresButton).getByTestId("features-icon"),
@@ -665,11 +665,11 @@ describe("Competitor comparison page", () => {
       within(useCasesButton).getByTestId("use-cases-icon"),
     ).toBeInTheDocument();
 
-    // Company should appear above Features in the navigation
-    const companyBeforeFeatures =
-      companyButton.compareDocumentPosition(featuresButton) &
+    // Competitor should appear above Features in the navigation
+    const competitorBeforeFeatures =
+      competitorButton.compareDocumentPosition(featuresButton) &
       Node.DOCUMENT_POSITION_FOLLOWING;
-    expect(companyBeforeFeatures).toBeTruthy();
+    expect(competitorBeforeFeatures).toBeTruthy();
   });
 
   it("renders a toggle icon to collapse the left navigation", () => {
@@ -906,11 +906,8 @@ describe("Competitor comparison page", () => {
     await user.click(t1Button);
 
     // After choosing T1, only tier 1 competitors should remain visible in the menu list
-    expect(
-      screen.getByText("Microsoft Power BI"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Sigma Computing"),
-    ).not.toBeInTheDocument();
+    const menu = screen.getByRole("menu");
+    expect(within(menu).getByText("Microsoft Power BI")).toBeInTheDocument();
+    expect(within(menu).queryByText("Sigma Computing")).not.toBeInTheDocument();
   });
 });

@@ -1,13 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import CompanyPage from "@/app/company/page";
+import CompanyPage from "../app/company/page";
 
-describe("Company comparison page", () => {
-  it("renders a header with the Company Comparison title and subtitle", () => {
+describe("Competitor comparison page", () => {
+  it("renders a header with the Competitor Comparison title and subtitle", () => {
     render(<CompanyPage />);
 
     expect(
-      screen.getByRole("heading", { name: /company comparison/i }),
+      screen.getByRole("heading", { name: /competitor comparison/i }),
     ).toBeInTheDocument();
 
     expect(
@@ -15,7 +15,7 @@ describe("Company comparison page", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders a left navigation menu for Product Marketing with Company, Features, and Use Cases entries and icons", () => {
+  it("renders a left navigation menu for Product Marketing with Competitor, Features, and Use Cases entries and icons", () => {
     render(<CompanyPage />);
 
     const nav = screen.getByRole("navigation", {
@@ -26,8 +26,8 @@ describe("Company comparison page", () => {
       within(nav).getByText(/product marketing/i),
     ).toBeInTheDocument();
 
-    const companyLink = within(nav).getByRole("link", {
-      name: /company/i,
+    const competitorLink = within(nav).getByRole("link", {
+      name: /competitor/i,
     });
     const featuresLink = within(nav).getByRole("link", {
       name: /features/i,
@@ -36,9 +36,7 @@ describe("Company comparison page", () => {
       name: /use cases/i,
     });
 
-    expect(
-      within(companyLink).getByTestId("company-icon"),
-    ).toBeInTheDocument();
+    expect(within(competitorLink).getByTestId("company-icon")).toBeInTheDocument();
     expect(
       within(featuresLink).getByTestId("features-icon"),
     ).toBeInTheDocument();
@@ -66,13 +64,13 @@ describe("Company comparison page", () => {
     render(<CompanyPage />);
 
     const competitorTab = screen.getByRole("button", {
-      name: /competitor/i,
+      name: /^competitor$/i,
     });
 
     await user.click(competitorTab);
 
     expect(
-      screen.getByText(/competitor battlecard/i),
+      screen.getByRole("button", { name: /company profile/i }),
     ).toBeInTheDocument();
 
     expect(
@@ -119,21 +117,23 @@ describe("Company comparison page", () => {
     render(<CompanyPage />);
 
     const competitorTab = screen.getByRole("button", {
-      name: /competitor/i,
+      name: /^competitor$/i,
     });
     await user.click(competitorTab);
 
-    // Default to WisdomAI card
-    expect(screen.getByText(/wisdomai/i)).toBeInTheDocument();
-
-    const selector = screen.getByRole("combobox", {
-      name: /select competitor/i,
+    // Default to WisdomAI card (competitor selector toggle shows the current selection)
+    const competitorDropdownButton = screen.getByRole("button", {
+      name: /wisdomai\s*▼/i,
     });
+    expect(competitorDropdownButton).toBeInTheDocument();
 
-    await user.selectOptions(selector, "Databricks Genie");
+    // Open the custom dropdown, then choose Databricks Genie
+    await user.click(competitorDropdownButton);
+    await user.click(screen.getByText(/databricks genie/i));
 
+    // The toggle should update to Databricks (short name)
     expect(
-      screen.getByRole("heading", { name: /databricks genie/i }),
+      screen.getByRole("button", { name: /databricks\s*▼/i }),
     ).toBeInTheDocument();
   });
 });

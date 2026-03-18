@@ -5,7 +5,7 @@ import React from 'react';
 export default function PageHeader() {
   return (
     <div className="page-header">
-      <div className="page-title">Company Comparison</div>
+      <h1 className="page-title">Competitor Comparison</h1>
       <div className="page-subtitle">WisdomAI vs 8 competitors</div>
     </div>
   );

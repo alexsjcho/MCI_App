@@ -203,7 +203,7 @@ export function ProductMarketingNav({ active }: ProductMarketingNavProps) {
                 data-testid="company-icon"
                 style={{ marginRight: 8 }}
               />
-              Company
+              Competitor
             </>
           )}
         </Button>
