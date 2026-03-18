@@ -219,16 +219,17 @@ It is designed to make reps faster and more consistent by producing ready-to-use
 - Three dropdown filters drive the entire page:
   - **Product**: maps to a `ProductId` (options come from `productList`).
   - **Industry**: maps to an `IndustryId` (options come from `industryList`).
-  - **Framework**: maps to a `FrameworkId` (`spin` or `meddpicc`).
+  - **Framework**: maps to a `FrameworkId` (`spin`, `meddpicc`, or `mettric`).
 - Content is split into two tabs:
   - **Strategy**: qualification criteria with how-to guidance, discovery questions, and red flags.
   - **Example**: a worked “qualified opportunity” narrative showing what good looks like.
 
-### Framework logic (SPIN vs MEDDPICC)
+### Framework logic (SPIN vs MEDDPICC vs METTRIC)
 
 - Framework selection drives which content generator is used:
   - **SPIN** (`spin`): Situation, Problem, Implication, Need‑Payoff.
   - **MEDDPICC** (`meddpicc`): Metrics, Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion, Competition.
+- **METTRIC** (`mettric`): Measure Outcomes, Identify Challenges & Rewards, Test Feasibility, Timeline, ROI vs Cost, Executive Buy-In, Commitment to Change.
 - For both frameworks:
   - Criteria have stable IDs and definitions, and the per‑product/per‑industry layer adds the practical guidance:
     - `howToQualify`
@@ -243,12 +244,13 @@ It is designed to make reps faster and more consistent by producing ready-to-use
 - **Framework selection helpers**: `mci_app/app/qualify/data/index.ts`
   - `getFrameworkCriteria(frameworkId, productId, industryId)`
   - `getFrameworkExample(frameworkId, productId, industryId)`
-  - `frameworkOptions` (SPIN + MEDDPICC)
+  - `frameworkOptions` (SPIN + MEDDPICC + METTRIC)
 - **Types**: `mci_app/app/qualify/data/types.ts`
   - `FrameworkCriterion`, `QualifiedOpportunityExample`, `FrameworkId`
 - **Framework content**:
   - `mci_app/app/qualify/data/spin-framework.ts`
   - `mci_app/app/qualify/data/meddpicc-framework.ts`
+  - `mci_app/app/qualify/data/mettric-framework.ts`
 - **Product and industry catalogs**:
   - `mci_app/app/qualify/data/products.ts`
   - `mci_app/app/qualify/data/industries.ts`
@@ -304,4 +306,54 @@ The **Company** page (`/company`) is a battlecard and positioning experience bui
 - **Quadrant chart config**: `mci_app/app/company/data/quadrantConfigs.ts`
 - **Battlecard content**: `mci_app/app/company/data/battlecardData.ts`
 - **Objection/response copy**: `mci_app/app/company/data/objectionResponses.ts`
+
+## Pricing Page — Business Logic
+
+The **Pricing** page (`/pricing`) provides a sales-ready market view of how WisdomAI compares on pricing transparency, capability coverage, and 3-year TCO.
+
+### Navigation and tabs
+
+- It renders inside the shared `ProductMarketingNav` layout with **Pricing** marked as the active entry.
+- `PricingProvider` manages:
+  - `selectedIds`: competitor selection (WisdomAI is always included)
+  - `activeTab`: one of `overview`, `valuemap`, `tco`, `tiers`, or `matrix`
+- Tabs (via `pricing/tabs/TabContent.tsx`):
+  - **Market Landscape** (overview)
+  - **Value / Price Map** (Value Map)
+  - **TCO Breakdown** (3-year Total Cost of Ownership)
+  - **Tier Analysis** (tier structure + value vs deploy ease)
+  - **Feature Matrix** (capability coverage by category)
+
+### Core business logic
+
+- **Competitor selection**
+  - WisdomAI cannot be removed (UI guards `id === "wisdom"`).
+  - “Clear” resets to a deterministic default selection (WisdomAI + Snowflake).
+- **Value / Price Map**
+  - Bubble size represents estimated ACV.
+  - X-axis is the vendor entry price.
+  - Y-axis is a composite value score (AI maturity, ease of use, connectivity, enterprise, support).
+- **TCO Breakdown**
+  - Uses `calcTCO` over per-vendor TCO components (license, implementation, training, compute, support).
+  - The summary bar compares WisdomAI vs the selected competitors’ average and highlights savings.
+- **Tier Analysis**
+  - A tier “model type” filter (free/starter, usage-based, per-user, capacity-based) controls which vendors’ tier blocks are shown.
+  - Tier content is driven from the `TIER_DATA` map per competitor id.
+- **Feature Matrix**
+  - A category filter selects a capability slice (AI/NLP, Analytics, Governance, Integrations, Deployment, etc.).
+  - The matrix uses `pricing/data/features.ts` to determine support state for each competitor (full / partial / not available / add-on).
+
+### Data and configuration sources
+
+- Route + container: `mci_app/app/pricing/page.tsx`, `mci_app/app/pricing/PricingComparisonApp.tsx`
+- Competitor + scoring data: `mci_app/app/pricing/data/competitors.ts`
+- Capability matrix data: `mci_app/app/pricing/data/features.ts`
+- Tier content: `mci_app/app/pricing/data/tiers.ts`
+- TCO + calculations: `mci_app/app/pricing/utils/calculations.ts` (and `calcTCO`)
+- Tab components:
+  - `mci_app/app/pricing/tabs/OverviewTab`
+  - `mci_app/app/pricing/tabs/ValueMapTab`
+  - `mci_app/app/pricing/tabs/TCOTab`
+  - `mci_app/app/pricing/tabs/TiersTab`
+  - `mci_app/app/pricing/tabs/MatrixTab`
 
